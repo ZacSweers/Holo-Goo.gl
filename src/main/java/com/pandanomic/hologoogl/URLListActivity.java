@@ -1,12 +1,24 @@
 package com.pandanomic.hologoogl;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -17,6 +29,7 @@ import org.json.JSONTokener;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 
 
 /**
@@ -101,6 +114,12 @@ public class URLListActivity extends FragmentActivity
     }
 
 	void handleSendText(Intent intent) {
+
+		if (!networkAvailable()) {
+			Toast.makeText(this, "Not connected to the internet", Toast.LENGTH_LONG).show();
+			return;
+		}
+
 		String sharedURL = intent.getStringExtra(Intent.EXTRA_TEXT);
 		if (sharedURL != null) {
 			final NotificationCompat.Builder mBuilder =
@@ -114,17 +133,6 @@ public class URLListActivity extends FragmentActivity
 					(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
 			mNotifyMgr.notify(mNotificationId, mBuilder.build());
-
-			// TODO: get shortened URL
-
-//			Handler handler = new Handler();
-//			handler.postDelayed(new Runnable() {
-//				public void run() {
-//					mBuilder.setProgress(0, 0, false);
-//					mBuilder.setContentTitle("Done").setContentText(null);
-//					mNotifyMgr.notify(mNotificationId, mBuilder.build());
-//				}
-//			}, 5000);
 
 			RetrieveShortenedURLTask getURLTask = new RetrieveShortenedURLTask(sharedURL);
 
@@ -146,6 +154,29 @@ public class URLListActivity extends FragmentActivity
 				}
 			}
 
+
+			final String finalResultURL = resultURL;
+			BroadcastReceiver brCopy = new BroadcastReceiver() {
+
+				@Override
+				public void onReceive(Context context, Intent intent) {
+					ClipboardManager clipboard = (ClipboardManager)
+							getBaseContext().getSystemService(Context.CLIPBOARD_SERVICE);
+					ClipData clip = ClipData.newPlainText("Shortened URL", finalResultURL);
+					clipboard.setPrimaryClip(clip);
+					mNotifyMgr.cancel(mNotificationId);
+					Toast.makeText(getBaseContext(), "Copied!", Toast.LENGTH_SHORT).show();
+
+				}
+			};
+
+			IntentFilter intentFilter = new IntentFilter("com.pandanomic.ACTION_COPY");
+			getBaseContext().registerReceiver(brCopy, intentFilter);
+
+			Intent copy = new Intent("com.pandanomic.ACTION_COPY");
+			PendingIntent piCopy = PendingIntent.getBroadcast(getBaseContext(), 0, copy, PendingIntent.FLAG_CANCEL_CURRENT);
+
+			mBuilder.addAction(R.drawable.ic_menu_copy, "Copy", piCopy);
 
 			mBuilder.setProgress(0, 0, false);
 			mBuilder.setContentTitle(resultURL);
@@ -191,5 +222,17 @@ public class URLListActivity extends FragmentActivity
 			Log.d("googl", obj.toString());
 			result = obj;
 		}
+	}
+
+	public void accountSetup() {
+		AccountManager am = AccountManager.get(this);
+
+		Account[] accounts = am.getAccountsByType("com.google");
+	}
+
+	public boolean networkAvailable() {
+		ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+		return networkInfo != null && networkInfo.isConnected();
 	}
 }
