@@ -3,5 +3,8 @@
 
     <string name="app_name">Holo Goo.gl</string>
     <string name="title_url_detail">URL Detail</string>
+    <string name="title_activity_urlshare_controller">URLShareController</string>
+    <string name="action_settings">Settings</string>
+    <string name="login">Login</string>
 
 </resources>

@@ -25,9 +25,9 @@ public class DummyContent {
 
     static {
         // Add 3 sample items.
-        addItem(new DummyItem("1", "Item 1"));
-        addItem(new DummyItem("2", "Item 2"));
-        addItem(new DummyItem("3", "Item 3"));
+        addItem(new DummyItem("1", "Some URL 1"));
+        addItem(new DummyItem("2", "Some URL 2"));
+        addItem(new DummyItem("3", "Some URL 3"));
     }
 
     private static void addItem(DummyItem item) {
@@ -41,6 +41,7 @@ public class DummyContent {
     public static class DummyItem {
         public String id;
         public String content;
+		public String metrics = "Here's where you'd see URL metrics like clicks";
 
         public DummyItem(String id, String content) {
             this.id = id;
@@ -51,5 +52,9 @@ public class DummyContent {
         public String toString() {
             return content;
         }
+
+		public String getMetrics() {
+			return this.metrics;
+		}
     }
 }
