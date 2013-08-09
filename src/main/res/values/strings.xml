@@ -6,5 +6,12 @@
     <string name="title_activity_urlshare_controller">URLShareController</string>
     <string name="action_settings">Settings</string>
     <string name="login">Login</string>
+    <string name="title_activity_shorten_urlresult">Shortened URL</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="shortening_url_dialog">Shortening your URL…</string>
+    <string name="copy">Copy</string>
+    <string name="share">Share</string>
+    <string name="shorten_new_URL">Shorten New URL</string>
+    <string name="refresh_url_list">Refresh URL List</string>
 
 </resources>

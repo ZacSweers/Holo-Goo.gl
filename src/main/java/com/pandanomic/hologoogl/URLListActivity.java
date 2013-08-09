@@ -2,10 +2,16 @@ package com.pandanomic.hologoogl;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.Toast;
 
 
 /**
@@ -52,7 +58,31 @@ public class URLListActivity extends FragmentActivity
                     .setActivateOnItemClick(true);
         }
 
+//        findViewById(R.id.shorten_new_URL).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                shortenNewURL();
+//            }
+//        });
+
         // TODO: If exposing deep links into your app, handle intents here.
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.shorten_new_URL:
+                shortenNewURL();
+                return true;
+            case R.id.refresh_url_list:
+                return true;
+            case R.id.login:
+                return true;
+            case R.id.action_settings:
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
 	@Override
@@ -93,4 +123,33 @@ public class URLListActivity extends FragmentActivity
 
 		Account[] accounts = am.getAccountsByType("com.google");
 	}
+
+    private void shortenNewURL() {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("Shorten new URL");
+        alert.setMessage("Paste a new URL here");
+
+        final EditText input = new EditText(this);
+        alert.setView(input);
+        alert.setPositiveButton("Go", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String urlToShare = input.getText().toString();
+                Intent intent = new Intent(getBaseContext(), ShortenURLResult.class);
+                intent.putExtra(Intent.EXTRA_TEXT, urlToShare);
+                intent.setType("text/plain");
+                intent.putExtra("URL", "true");
+                startActivity(intent);
+            }
+        });
+
+        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+
+        alert.show();
+    }
 }
