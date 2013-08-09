@@ -126,10 +126,11 @@ public class URLListActivity extends FragmentActivity
 
     private void shortenNewURL() {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
-        alert.setTitle("Shorten new URL");
-        alert.setMessage("Paste a new URL here");
+        alert.setTitle("Shorten New URL");
+        alert.setCancelable(true);
 
         final EditText input = new EditText(this);
+        input.setHint("Paste a URL here");
         alert.setView(input);
         alert.setPositiveButton("Go", new DialogInterface.OnClickListener() {
             @Override
