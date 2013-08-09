@@ -20,6 +20,9 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -27,6 +30,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.SocketTimeoutException;
 
 public class ShortenURLResult extends Activity {
 
@@ -99,8 +103,12 @@ public class ShortenURLResult extends Activity {
 
 			Log.d("googl", "Fetching data");
 			try {
-				DefaultHttpClient client = new DefaultHttpClient();
-				HttpPost post = new HttpPost("https://www.googleapis.com/urlshortener/v1/url");
+                HttpParams httpParams = new BasicHttpParams();
+                HttpConnectionParams.setConnectionTimeout(httpParams, 5000);
+                HttpConnectionParams.setSoTimeout(httpParams, 5000);
+
+                DefaultHttpClient client = new DefaultHttpClient(httpParams);
+                HttpPost post = new HttpPost("https://www.googleapis.com/urlshortener/v1/url");
 				post.setEntity(new StringEntity("{\"longUrl\": \"" + sharedURL + "\"}"));
 				post.setHeader("Content-Type", "application/json");
 
@@ -127,6 +135,9 @@ public class ShortenURLResult extends Activity {
                 else if (e instanceof IOException) {
                     errorMessage += "IO Exception in parsing response";
                 }
+//                else if (e instanceof SocketTimeoutException) {
+//                    errorMessage += "Connection timeout";
+//                }
                 else {
                     errorMessage += "JSON parsing exception";
                 }
