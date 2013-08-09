@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.pandanomic.hologoogl.dummy.ShortenedURLContent;
+import com.pandanomic.hologoogl.URLContent.ShortenedURLContent;
 
 /**
  * A fragment representing a single URL detail screen.
@@ -23,7 +23,7 @@ public class URLDetailFragment extends Fragment {
     public static final String ARG_ITEM_ID = "item_id";
 
     /**
-     * The dummy content this fragment is presenting.
+     * The URLContent content this fragment is presenting.
      */
     private ShortenedURLContent.ShortenedURLItem mItem;
 
@@ -39,7 +39,7 @@ public class URLDetailFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         if (getArguments().containsKey(ARG_ITEM_ID)) {
-            // Load the dummy content specified by the fragment
+            // Load the URLContent content specified by the fragment
             // arguments. In a real-world scenario, use a Loader
             // to load content from a content provider.
             mItem = ShortenedURLContent.ITEM_MAP.get(getArguments().getString(ARG_ITEM_ID));
@@ -51,7 +51,7 @@ public class URLDetailFragment extends Fragment {
             Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_url_detail, container, false);
 
-        // Show the dummy content as text in a TextView.
+        // Show the URLContent content as text in a TextView.
         if (mItem != null) {
             ((TextView) rootView.findViewById(R.id.url_detail)).setText(mItem.getMetrics());
         }

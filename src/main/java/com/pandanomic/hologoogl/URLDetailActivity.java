@@ -1,10 +1,14 @@
 package com.pandanomic.hologoogl;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
+import android.view.Menu;
 import android.view.MenuItem;
+
+import org.json.JSONObject;
 
 /**
  * An activity representing a single URL detail screen. This
@@ -49,6 +53,12 @@ public class URLDetailActivity extends FragmentActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.urldetail_menu, menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
@@ -61,7 +71,18 @@ public class URLDetailActivity extends FragmentActivity {
                 //
                 NavUtils.navigateUpTo(this, new Intent(this, URLListActivity.class));
                 return true;
+            case R.id.refresh_metrics:
+                return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private class RefreshMetrics extends AsyncTask<String, Void, JSONObject> {
+
+        @Override
+        protected JSONObject doInBackground(String... params) {
+
+            return null;
+        }
     }
 }

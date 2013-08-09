@@ -7,7 +7,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.pandanomic.hologoogl.dummy.ShortenedURLContent;
+import com.pandanomic.hologoogl.URLContent.ShortenedURLContent;
 
 /**
  * A list fragment representing a list of URLs. This fragment
@@ -50,7 +50,7 @@ public class URLListFragment extends ListFragment {
     }
 
     /**
-     * A dummy implementation of the {@link Callbacks} interface that does
+     * A URLContent implementation of the {@link Callbacks} interface that does
      * nothing. Used only when this fragment is not attached to an activity.
      */
     private static Callbacks sDummyCallbacks = new Callbacks() {
@@ -105,7 +105,7 @@ public class URLListFragment extends ListFragment {
     public void onDetach() {
         super.onDetach();
 
-        // Reset the active callbacks interface to the dummy implementation.
+        // Reset the active callbacks interface to the URLContent implementation.
         mCallbacks = sDummyCallbacks;
     }
 

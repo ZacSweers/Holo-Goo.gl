@@ -1,4 +1,6 @@
-package com.pandanomic.hologoogl.dummy;
+package com.pandanomic.hologoogl.URLContent;
+
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,12 +16,12 @@ import java.util.Map;
 public class ShortenedURLContent {
 
     /**
-     * An array of sample (dummy) items.
+     * An array of sample (URLContent) items.
      */
     public static List<ShortenedURLItem> ITEMS = new ArrayList<ShortenedURLItem>();
 
     /**
-     * A map of sample (dummy) items, by ID.
+     * A map of sample (URLContent) items, by ID.
      */
     public static Map<String, ShortenedURLItem> ITEM_MAP = new HashMap<String, ShortenedURLItem>();
 
@@ -36,16 +38,23 @@ public class ShortenedURLContent {
     }
 
     /**
-     * A dummy item representing a piece of content.
+     * A URLContent item representing a piece of content.
      */
     public static class ShortenedURLItem {
         public String id;
         public String content;
 		public String metrics = "Here's where you'd see URL metrics like clicks";
+        public String shortenedURL;
+        public int clicks;
+        public JSONObject URLJSONObject;
 
         public ShortenedURLItem(String id, String content) {
             this.id = id;
             this.content = content;
+        }
+
+        public ShortenedURLItem(JSONObject object) {
+
         }
 
         @Override
