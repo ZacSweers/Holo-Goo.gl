@@ -1,13 +1,22 @@
 package com.pandanomic.hologoogl;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.pandanomic.hologoogl.URLContent.ShortenedURLContent;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * A fragment representing a single URL detail screen.
@@ -44,6 +53,8 @@ public class URLDetailFragment extends Fragment {
             // to load content from a content provider.
             mItem = ShortenedURLContent.ITEM_MAP.get(getArguments().getString(ARG_ITEM_ID));
         }
+
+        getURLStats();
     }
 
     @Override
@@ -57,5 +68,42 @@ public class URLDetailFragment extends Fragment {
         }
 
         return rootView;
+    }
+
+    private void getURLStats() {
+        JSONObject result;
+        String resultURL = null;
+        String longUrl = null;
+        String created = null;
+        try {
+            result = new GetTask(this.getActivity(), 1).execute(mItem.content).get(5, TimeUnit.SECONDS);
+
+            if (result == null) {
+                Toast.makeText(this.getActivity(), "Error retrieving data", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            // TODO: Check for error
+
+            resultURL = result.getString("id");
+            longUrl = result.getString("longUrl");
+            created = result.getString("created");
+
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+
+        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+        alert.setTitle("Long URL");
+        alert.setCancelable(true);
+        alert.setMessage(longUrl);
+        alert.show();
     }
 }

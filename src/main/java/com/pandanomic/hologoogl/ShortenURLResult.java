@@ -5,9 +5,6 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -15,22 +12,12 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
+import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.SocketTimeoutException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ShortenURLResult extends Activity {
 
@@ -48,7 +35,8 @@ public class ShortenURLResult extends Activity {
         shortenedURLView = (TextView) findViewById(R.id.shortenedURL);
         statusText = (TextView) findViewById(R.id.URL_shortening_status);
 
-		progressBar.setVisibility(View.VISIBLE);
+//		progressBar.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(View.GONE);
 		shortenedURLView.setVisibility(View.GONE);
 
 		Intent intent = getIntent();
@@ -59,8 +47,40 @@ public class ShortenURLResult extends Activity {
 			Log.d("googl", "handling intent");
 			String sharedURL = intent.getStringExtra(Intent.EXTRA_TEXT);
 			if (sharedURL != null) {
-				RetrieveURLTask retrieveURLTask = new RetrieveURLTask();
-				retrieveURLTask.execute(sharedURL);
+                generateURL(sharedURL);
+//                JSONObject result;
+//                String resultURL = null;
+//                try {
+//                    result = new PostTask(this).execute(sharedURL).get(5000, TimeUnit.MILLISECONDS);
+//
+//                    if (result == null) {
+//                        Toast.makeText(this, "Error retrieving data", Toast.LENGTH_LONG);
+//                        return;
+//                    }
+//
+//                    resultURL = result.getString("id");
+//
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                } catch (ExecutionException e) {
+//                    e.printStackTrace();
+//                } catch (TimeoutException e) {
+//                    Toast.makeText(this, "Timeout", Toast.LENGTH_LONG).show();
+//                    e.printStackTrace();
+//                } catch (JSONException e) {
+//                    e.printStackTrace();
+//                }
+//
+//                if (resultURL != null) {
+//                    statusText.setText("Done!");
+//                    shortenedURLView.setText(resultURL);
+////                    progressBar.setVisibility(View.GONE);
+//                    shortenedURLView.setVisibility(View.VISIBLE);
+//                    finalShortenedURL = resultURL;
+//                }
+//				RetrieveURLTask retrieveURLTask = new RetrieveURLTask();
+//				retrieveURLTask.execute(sharedURL);
+
 			}
 		}
 
@@ -80,94 +100,39 @@ public class ShortenURLResult extends Activity {
 
     }
 
-	private class RetrieveURLTask extends AsyncTask<String, Void, String> {
+    private void generateURL(String sharedURL) {
+        JSONObject result;
+        String resultURL = null;
+        try {
+            result = new PostTask(this).execute(sharedURL).get(5000, TimeUnit.MILLISECONDS);
 
-		@Override
-		protected void onPreExecute() {
-		}
+            if (result == null) {
+                Toast.makeText(getBaseContext(), "Error retrieving data", Toast.LENGTH_LONG).show();
+                return;
+            }
 
-		@Override
-		protected String doInBackground(String... params) {
-			String sharedURL = params[0];
-			String shortenedURL;
+            resultURL = result.getString("id");
 
-            /**
-             * Check network connection
-             * TODO: timeout as well
-             */
-			if (!networkAvailable()) {
-				Toast.makeText(getBaseContext(), "Not connected to the internet", Toast.LENGTH_LONG).show();
-				progressBar.setVisibility(View.GONE);
-				return "Error";
-			}
-
-			Log.d("googl", "Fetching data");
-			try {
-                HttpParams httpParams = new BasicHttpParams();
-                HttpConnectionParams.setConnectionTimeout(httpParams, 5000);
-                HttpConnectionParams.setSoTimeout(httpParams, 5000);
-
-                DefaultHttpClient client = new DefaultHttpClient(httpParams);
-                HttpPost post = new HttpPost("https://www.googleapis.com/urlshortener/v1/url");
-				post.setEntity(new StringEntity("{\"longUrl\": \"" + sharedURL + "\"}"));
-				post.setHeader("Content-Type", "application/json");
-
-				HttpResponse response = client.execute(post);
-
-				BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-				StringBuilder builder = new StringBuilder();
-				for (String line; (line = reader.readLine()) != null;) {
-					builder.append(line).append("\n");
-				}
-
-				JSONObject results = new JSONObject(new JSONTokener(builder.toString()));
-                shortenedURL = results.getString("id");
-			}
-			catch (Exception e) {
-				e.printStackTrace();
-                String errorMessage = "Error: ";
-                if (e instanceof UnsupportedEncodingException) {
-                    errorMessage += "Encoding exception";
-                }
-                else if (e instanceof ClientProtocolException) {
-                    errorMessage += "POST exception";
-                }
-                else if (e instanceof IOException) {
-                    errorMessage += "IO Exception in parsing response";
-                }
-//                else if (e instanceof SocketTimeoutException) {
-//                    errorMessage += "Connection timeout";
-//                }
-                else {
-                    errorMessage += "JSON parsing exception";
-                }
-
-                Toast.makeText(getBaseContext(), errorMessage, Toast.LENGTH_LONG).show();
-                Log.e("googl:retrieveURLTask", errorMessage);
-                statusText.setText(errorMessage);
-				return "Error";
-			}
-            return shortenedURL;
-		}
-
-        /**
-         * Post-execution stuff updating the UI
-         * @param shortenedURL shortenedURL received from Goo.gl
-         */
-        protected void onPostExecute(String shortenedURL) {
-            statusText.setText("Done!");
-            shortenedURLView.setText(shortenedURL);
-            progressBar.setVisibility(View.GONE);
-            shortenedURLView.setVisibility(View.VISIBLE);
-            finalShortenedURL = shortenedURL;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            Toast.makeText(getBaseContext(), "Timeout", Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-	}
 
-	private boolean networkAvailable() {
-		ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-		return networkInfo != null && networkInfo.isConnected();
-	}
+        if (resultURL != null) {
+            statusText.setText("Done!");
+            shortenedURLView.setText(resultURL);
+            shortenedURLView.setVisibility(View.VISIBLE);
+            finalShortenedURL = resultURL;
+        } else {
+            Toast.makeText(getBaseContext(), "Failed", Toast.LENGTH_LONG).show();
+        }
+    }
 
     private void copyURL() {
         ClipboardManager clipboard = (ClipboardManager)
