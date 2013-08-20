@@ -19,4 +19,9 @@
             android:title="@string/refresh_url_list"
             android:icon="@drawable/ic_menu_navigation_refresh"
             android:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/send_feedback"
+        android:title="@string/send_feedback"
+        android:showAsAction="never"/>
 </menu>

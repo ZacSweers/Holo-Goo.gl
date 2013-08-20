@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -85,6 +86,9 @@ public class URLListActivity extends FragmentActivity
             case R.id.login:
                 return true;
             case R.id.action_settings:
+                return true;
+            case R.id.send_feedback:
+                sendFeedback();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -211,5 +215,15 @@ public class URLListActivity extends FragmentActivity
         intent.putExtra(Intent.EXTRA_TEXT, input);
         intent.putExtra(Intent.EXTRA_SUBJECT, "Shared from Holo Goo.gl");
         startActivity(Intent.createChooser(intent, "Share"));
+    }
+
+    private void sendFeedback() {
+        Intent gmail = new Intent(Intent.ACTION_VIEW);
+        gmail.setClassName("com.google.android.gm", "com.google.android.gm.ComposeActivityGmail");
+        gmail.putExtra(Intent.EXTRA_EMAIL, new String[] { "pandanomic@gmail.com" });
+        gmail.setData(Uri.parse("pandanomic@gmail.com"));
+        gmail.putExtra(Intent.EXTRA_SUBJECT, "Holo Goo.gl Feedback");
+        gmail.setType("plain/text");
+        startActivity(gmail);
     }
 }

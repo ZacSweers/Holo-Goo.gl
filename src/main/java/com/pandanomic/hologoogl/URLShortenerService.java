@@ -52,32 +52,54 @@ public class URLShortenerService  extends Service {
         mNotifyMgr.notify(mNotificationId, mBuilder.build());
 
         final String finalResultURL = shortenedURL;
-        BroadcastReceiver brCopy = new BroadcastReceiver() {
+        BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
 
             @Override
             public void onReceive(Context context, Intent intent) {
-                ClipboardManager clipboard = (ClipboardManager)
-                        getBaseContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("Shortened URL", finalResultURL);
-                clipboard.setPrimaryClip(clip);
+                String action = intent.getAction();
+                if (action.equals("com.pandanomic.ACTION_COPY")) {
+                    copyURL(finalResultURL);
+                }
+                if (action.equals("com.pandanomic.ACTION_SHARE")) {
+                    shareURL(finalResultURL);
+                }
                 mNotifyMgr.cancel(mNotificationId);
-                Toast.makeText(getBaseContext(), "Copied!", Toast.LENGTH_SHORT).show();
                 unregisterReceiver(this);
                 stopService(originalIntent);
             }
         };
 
-        IntentFilter intentFilter = new IntentFilter("com.pandanomic.ACTION_COPY");
-        getBaseContext().registerReceiver(brCopy, intentFilter);
-
+        IntentFilter intentFilterCopy = new IntentFilter("com.pandanomic.ACTION_COPY");
+        getBaseContext().registerReceiver(broadcastReceiver, intentFilterCopy);
         Intent copy = new Intent("com.pandanomic.ACTION_COPY");
         PendingIntent piCopy = PendingIntent.getBroadcast(getBaseContext(), 0, copy, PendingIntent.FLAG_CANCEL_CURRENT);
-
         mBuilder.addAction(R.drawable.ic_menu_copy, "Copy", piCopy);
 
+//        IntentFilter intentFilterShare = new IntentFilter("com.pandanomic.ACTION_SHARE");
+//        getBaseContext().registerReceiver(broadcastReceiver, intentFilterShare);
+//        Intent share = new Intent("com.pandanomic.ACTION_SHARE");
+//        PendingIntent piShare = PendingIntent.getBroadcast(getBaseContext(), 0, share, PendingIntent.FLAG_CANCEL_CURRENT);
+//        mBuilder.addAction(R.drawable.ic_social_share, "Share", piShare);
+
         mBuilder.setProgress(0, 0, false);
-        mBuilder.setContentTitle("Done");
+        mBuilder.setContentTitle("URL Shortened!");
         mBuilder.setContentText(finalResultURL);
         mNotifyMgr.notify(mNotificationId, mBuilder.build());
+    }
+
+    private void copyURL(String url) {
+        ClipboardManager clipboard = (ClipboardManager)
+                getBaseContext().getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("Shortened URL", url);
+        clipboard.setPrimaryClip(clip);
+        Toast.makeText(getBaseContext(), "Copied!", Toast.LENGTH_SHORT).show();
+    }
+
+    private void shareURL(String url) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_TEXT, url);
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Shared from Holo Goo.gl");
+        startActivity(Intent.createChooser(intent, "Share"));
     }
 }
