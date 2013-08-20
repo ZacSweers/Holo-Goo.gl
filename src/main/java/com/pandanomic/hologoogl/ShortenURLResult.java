@@ -48,39 +48,6 @@ public class ShortenURLResult extends Activity {
 			String sharedURL = intent.getStringExtra(Intent.EXTRA_TEXT);
 			if (sharedURL != null) {
                 generateURL(sharedURL);
-//                JSONObject result;
-//                String resultURL = null;
-//                try {
-//                    result = new PostTask(this).execute(sharedURL).get(5000, TimeUnit.MILLISECONDS);
-//
-//                    if (result == null) {
-//                        Toast.makeText(this, "Error retrieving data", Toast.LENGTH_LONG);
-//                        return;
-//                    }
-//
-//                    resultURL = result.getString("id");
-//
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                } catch (ExecutionException e) {
-//                    e.printStackTrace();
-//                } catch (TimeoutException e) {
-//                    Toast.makeText(this, "Timeout", Toast.LENGTH_LONG).show();
-//                    e.printStackTrace();
-//                } catch (JSONException e) {
-//                    e.printStackTrace();
-//                }
-//
-//                if (resultURL != null) {
-//                    statusText.setText("Done!");
-//                    shortenedURLView.setText(resultURL);
-////                    progressBar.setVisibility(View.GONE);
-//                    shortenedURLView.setVisibility(View.VISIBLE);
-//                    finalShortenedURL = resultURL;
-//                }
-//				RetrieveURLTask retrieveURLTask = new RetrieveURLTask();
-//				retrieveURLTask.execute(sharedURL);
-
 			}
 		}
 

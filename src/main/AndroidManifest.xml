@@ -49,6 +49,12 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
+        <service
+                android:name="com.pandanomic.hologoogl.URLShortenerService"
+                android:icon="@drawable/ic_launcher"
+                android:label="@string/URLShortenerService"
+                >
+        </service>
     </application>
 
 </manifest>

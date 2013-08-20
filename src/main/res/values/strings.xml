@@ -14,5 +14,6 @@
     <string name="shorten_new_URL">Shorten New URL</string>
     <string name="refresh_url_list">Refresh URL List</string>
     <string name="refresh_metrics">Refresh Metrics</string>
+    <string name="URLShortenerService">URL Shortener Service</string>
 
 </resources>

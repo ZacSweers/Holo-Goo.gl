@@ -31,13 +31,20 @@ public class URLShareController extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+//		super.onCreate(savedInstanceState);
 		Intent intent = getIntent();
 		String action = intent.getAction();
 		String type = intent.getType();
 
 		if (Intent.ACTION_SEND.equals(action) && "text/plain".equals(type)) {
-			handleSendText(intent);
+            String sharedURL = intent.getStringExtra(Intent.EXTRA_TEXT);
+
+            Intent i = new Intent(this, URLShortenerService.class);
+            i.putExtra("URL", sharedURL);
+            startService(i);
+            Toast.makeText(this, "Generating URL, check notification bar", Toast.LENGTH_LONG).show();
+            finish();
+//			handleSendText(intent);
 		}
     }
 
