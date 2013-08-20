@@ -1,7 +1,6 @@
 package com.pandanomic.hologoogl;
 
-import android.app.Activity;
-import android.widget.Toast;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -12,39 +11,37 @@ import java.util.concurrent.TimeoutException;
 
 public class URLShortener {
 
-    Activity parent;
-
-    public URLShortener(Activity activity) {
-        parent = activity;
-    }
+    private final String LOGTAG = "URLShortener";
 
     public String generate(String input) {
         JSONObject result;
         String resultURL = null;
         try {
-            result = new PostTask(parent).execute(input).get(5000, TimeUnit.MILLISECONDS);
+            result = new PostTask().execute(input).get(5000, TimeUnit.MILLISECONDS);
 
             if (result == null) {
-                Toast.makeText(parent, "Error retrieving data", Toast.LENGTH_LONG).show();
+                Log.e(LOGTAG, "Error retrieving data");
                 return null;
             }
 
             resultURL = result.getString("id");
 
         } catch (InterruptedException e) {
+            Log.e(LOGTAG, "Interrupted exception");
             e.printStackTrace();
         } catch (ExecutionException e) {
+            Log.e(LOGTAG, "Execution exception");
             e.printStackTrace();
         } catch (TimeoutException e) {
-            Toast.makeText(parent, "Timeout", Toast.LENGTH_LONG).show();
+            Log.e(LOGTAG, "Timeout exception");
             e.printStackTrace();
         } catch (JSONException e) {
-            Toast.makeText(parent, "Error Parsing Result", Toast.LENGTH_LONG).show();
+            Log.e(LOGTAG, "Error parsing result");
             e.printStackTrace();
         }
 
         if (resultURL == null) {
-            Toast.makeText(parent, "Failed", Toast.LENGTH_LONG).show();
+            Log.e(LOGTAG, "Failed");
             return null;
         }
 

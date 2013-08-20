@@ -71,7 +71,7 @@ public class ShortenURLResult extends Activity {
         JSONObject result;
         String resultURL = null;
         try {
-            result = new PostTask(this).execute(sharedURL).get(5000, TimeUnit.MILLISECONDS);
+            result = new PostTask().execute(sharedURL).get(5000, TimeUnit.MILLISECONDS);
 
             if (result == null) {
                 Toast.makeText(getBaseContext(), "Error retrieving data", Toast.LENGTH_LONG).show();

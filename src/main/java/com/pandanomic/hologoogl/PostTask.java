@@ -1,12 +1,7 @@
 package com.pandanomic.hologoogl;
 
-import android.app.Activity;
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -26,18 +21,8 @@ import java.io.UnsupportedEncodingException;
 
 public class PostTask extends AsyncTask<String, Void, JSONObject> {
 
-    private Activity parentActivity;
-//    private ProgressDialog progressDialog;
-
-    public PostTask(Activity activity) {
-        parentActivity = activity;
-//        progressDialog = new ProgressDialog(parentActivity);
-    }
-
     @Override
     protected void onPreExecute() {
-//        this.progressDialog.setMessage("Retrieving Data");
-//        this.progressDialog.show();
     }
 
     @Override
@@ -45,15 +30,6 @@ public class PostTask extends AsyncTask<String, Void, JSONObject> {
         String sharedURL = params[0];
 
         JSONObject results;
-
-        /**
-         * Check network connection
-         * TODO: timeout as well
-         */
-        if (!networkAvailable()) {
-            Toast.makeText(parentActivity, "Not connected to the internet", Toast.LENGTH_LONG).show();
-            return null;
-        }
 
         Log.d("googl", "Fetching data");
         try {
@@ -92,7 +68,7 @@ public class PostTask extends AsyncTask<String, Void, JSONObject> {
                 errorMessage += "JSON parsing exception";
             }
 
-            Log.e("googl:retrieveURLTask", errorMessage);
+            Log.e("PostTask", errorMessage);
             return null;
         }
         return results;
@@ -103,14 +79,5 @@ public class PostTask extends AsyncTask<String, Void, JSONObject> {
      * @param result JSONObject result received from Goo.gl
      */
     protected void onPostExecute(JSONObject result) {
-//        if (progressDialog.isShowing()) {
-//            progressDialog.dismiss();
-//        }
-    }
-
-    private boolean networkAvailable() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) parentActivity.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-        return networkInfo != null && networkInfo.isConnected();
     }
 }

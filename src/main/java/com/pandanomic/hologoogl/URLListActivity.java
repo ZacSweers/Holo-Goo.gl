@@ -8,6 +8,8 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -162,7 +164,13 @@ public class URLListActivity extends FragmentActivity
     }
 
     private void generateShortenedURL(String input) {
-        URLShortener shortener = new URLShortener(this);
+        ConnectivityManager connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        if (!(networkInfo != null && networkInfo.isConnected())) {
+            Toast.makeText(this, "Check your internet connection", Toast.LENGTH_LONG).show();
+            return;
+        }
+        URLShortener shortener = new URLShortener();
         Log.d("hologoogl", "generating");
         final String resultURL = shortener.generate(input);
         Log.d("hologoogl", "done generating");
