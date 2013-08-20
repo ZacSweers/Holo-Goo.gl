@@ -1,6 +1,5 @@
 package com.pandanomic.hologoogl;
 
-import android.app.AlertDialog;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -100,10 +99,10 @@ public class URLDetailFragment extends Fragment {
             e.printStackTrace();
         }
 
-        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
-        alert.setTitle("Long URL");
-        alert.setCancelable(true);
-        alert.setMessage(longUrl);
-        alert.show();
+//        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+//        alert.setTitle("Long URL");
+//        alert.setCancelable(true);
+//        alert.setMessage(longUrl);
+//        alert.show();
     }
 }

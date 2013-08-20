@@ -3,13 +3,17 @@ package com.pandanomic.hologoogl;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.AlertDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -61,7 +65,7 @@ public class URLListActivity extends FragmentActivity
 //        findViewById(R.id.shorten_new_URL).setOnClickListener(new View.OnClickListener() {
 //            @Override
 //            public void onClick(View v) {
-//                shortenNewURL();
+//                newURLDialog();
 //            }
 //        });
 
@@ -72,7 +76,7 @@ public class URLListActivity extends FragmentActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.shorten_new_URL:
-                shortenNewURL();
+                newURLDialog();
                 return true;
             case R.id.refresh_url_list:
                 return true;
@@ -124,23 +128,26 @@ public class URLListActivity extends FragmentActivity
 		Account[] accounts = am.getAccountsByType("com.google");
 	}
 
-    private void shortenNewURL() {
+    private void newURLDialog() {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setTitle("Shorten New URL");
         alert.setCancelable(true);
 
         final EditText input = new EditText(this);
-        input.setHint("Paste a URL here");
+        input.setHint("Type or paste a URL here");
         alert.setView(input);
         alert.setPositiveButton("Go", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String urlToShare = input.getText().toString();
-                Intent intent = new Intent(getBaseContext(), ShortenURLResult.class);
-                intent.putExtra(Intent.EXTRA_TEXT, urlToShare);
-                intent.setType("text/plain");
-                intent.putExtra("URL", "true");
-                startActivity(intent);
+
+                // Hide keyboard
+                InputMethodManager imm = (InputMethodManager)getSystemService(
+                        Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
+
+                generateShortenedURL(urlToShare);
+
             }
         });
 
@@ -152,5 +159,49 @@ public class URLListActivity extends FragmentActivity
         });
 
         alert.show();
+    }
+
+    private void generateShortenedURL(String input) {
+        URLShortener shortener = new URLShortener(this);
+        Log.d("hologoogl", "generating");
+        final String resultURL = shortener.generate(input);
+        Log.d("hologoogl", "done generating");
+
+        Log.d("hologoogl", "Generated " + resultURL);
+
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle(resultURL)
+                .setCancelable(true)
+                .setPositiveButton("Share", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        shareURL(resultURL);
+                    }
+        });
+
+        alert.setNegativeButton("Copy", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                copyURL(resultURL);
+            }
+        });
+
+        alert.show();
+    }
+
+    private void copyURL(String input) {
+        ClipboardManager clipboard = (ClipboardManager)
+                getBaseContext().getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("Shortened URL", input);
+        clipboard.setPrimaryClip(clip);
+        Toast.makeText(getBaseContext(), "Copied!", Toast.LENGTH_SHORT).show();
+    }
+
+    private void shareURL(String input) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_TEXT, input);
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Shared from Holo Goo.gl");
+        startActivity(Intent.createChooser(intent, "Share"));
     }
 }

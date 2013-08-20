@@ -1,7 +1,6 @@
 package com.pandanomic.hologoogl;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -28,17 +27,17 @@ import java.io.UnsupportedEncodingException;
 public class PostTask extends AsyncTask<String, Void, JSONObject> {
 
     private Activity parentActivity;
-    private ProgressDialog progressDialog;
+//    private ProgressDialog progressDialog;
 
     public PostTask(Activity activity) {
         parentActivity = activity;
-        progressDialog = new ProgressDialog(parentActivity);
+//        progressDialog = new ProgressDialog(parentActivity);
     }
 
     @Override
     protected void onPreExecute() {
-        this.progressDialog.setMessage("Retrieving Data");
-        this.progressDialog.show();
+//        this.progressDialog.setMessage("Retrieving Data");
+//        this.progressDialog.show();
     }
 
     @Override
@@ -104,9 +103,9 @@ public class PostTask extends AsyncTask<String, Void, JSONObject> {
      * @param result JSONObject result received from Goo.gl
      */
     protected void onPostExecute(JSONObject result) {
-        if (progressDialog.isShowing()) {
-            progressDialog.dismiss();
-        }
+//        if (progressDialog.isShowing()) {
+//            progressDialog.dismiss();
+//        }
     }
 
     private boolean networkAvailable() {

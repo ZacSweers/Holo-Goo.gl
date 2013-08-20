@@ -43,7 +43,7 @@ public class ShortenURLResult extends Activity {
 		String action = intent.getAction();
 		String type = intent.getType();
 
-		if ((Intent.ACTION_SEND.equals(action) || "true".equals(intent.getStringExtra("URL")))&& "text/plain".equals(type)) {
+		if ((Intent.ACTION_SEND.equals(action) || "true".equals(intent.getStringExtra("URL"))) && "text/plain".equals(type)) {
 			Log.d("googl", "handling intent");
 			String sharedURL = intent.getStringExtra(Intent.EXTRA_TEXT);
 			if (sharedURL != null) {
@@ -121,6 +121,7 @@ public class ShortenURLResult extends Activity {
             Toast.makeText(getBaseContext(), "Timeout", Toast.LENGTH_LONG).show();
             e.printStackTrace();
         } catch (JSONException e) {
+            Toast.makeText(getBaseContext(), "Error Parsing Result", Toast.LENGTH_LONG).show();
             e.printStackTrace();
         }
 
