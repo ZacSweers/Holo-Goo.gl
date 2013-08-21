@@ -16,5 +16,6 @@
     <string name="refresh_metrics">Refresh Metrics</string>
     <string name="URLShortenerService">URL Shortener Service</string>
     <string name="send_feedback">Send Feedback</string>
+    <string name="logout">Logout</string>
 
 </resources>

@@ -2,6 +2,8 @@ package com.pandanomic.hologoogl;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
 import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -45,6 +47,12 @@ public class URLListActivity extends FragmentActivity
      * device.
      */
     private boolean mTwoPane;
+    private static final int AUTHORIZATION_CODE = 1993;
+    private static final int ACCOUNT_CODE = 1601;
+    private AuthPreferences authPreferences;
+    private AccountManager accountManager;
+    private final String SCOPE = "https://www.googleapis.com/auth/urlshortener";
+    private boolean loggedIn = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,12 +73,17 @@ public class URLListActivity extends FragmentActivity
                     .setActivateOnItemClick(true);
         }
 
-//        findViewById(R.id.shorten_new_URL).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                newURLDialog();
-//            }
-//        });
+
+        accountManager = AccountManager.get(this);
+        authPreferences = new AuthPreferences(this);
+        loggedIn = authPreferences.loggedIn();
+        if (authPreferences.getUser() != null && authPreferences.getToken() != null) {
+            // Account exists, refresh stuff and make button log out
+            Toast.makeText(this, "Have token for: " + authPreferences.getToken(), Toast.LENGTH_LONG).show();
+            loggedIn = true;
+        } else {
+            // No account, refresh only anonymous ones and leave button alone
+        }
 
         // TODO: If exposing deep links into your app, handle intents here.
     }
@@ -84,6 +97,12 @@ public class URLListActivity extends FragmentActivity
             case R.id.refresh_url_list:
                 return true;
             case R.id.login:
+                accountSetup();
+                return true;
+            case R.id.logout:
+                logout();
+                Toast.makeText(this, "You are now logged out", Toast.LENGTH_LONG).show();
+                invalidateOptionsMenu();
                 return true;
             case R.id.action_settings:
                 return true;
@@ -98,8 +117,29 @@ public class URLListActivity extends FragmentActivity
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.urllist_menu, menu);
+
+        if (loggedIn) {
+            menu.findItem(R.id.login).setVisible(false);
+            menu.findItem(R.id.logout).setVisible(true);
+        } else {
+            menu.findItem(R.id.login).setVisible(true);
+            menu.findItem(R.id.logout).setVisible(false);
+        }
+
 		return true;
 	}
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        if (loggedIn) {
+            menu.findItem(R.id.login).setVisible(false);
+            menu.findItem(R.id.logout).setVisible(true);
+        } else {
+            menu.findItem(R.id.login).setVisible(true);
+            menu.findItem(R.id.logout).setVisible(false);
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
 
     /**
      * Callback method from {@link URLListFragment.Callbacks}
@@ -129,10 +169,96 @@ public class URLListActivity extends FragmentActivity
     }
 
 	public void accountSetup() {
-		AccountManager am = AccountManager.get(this);
+		Intent intent = AccountManager.newChooseAccountIntent(null, null, new String[] {"com.google"}, false, null, null, null, null);
+        startActivityForResult(intent, ACCOUNT_CODE);
+    }
 
-		Account[] accounts = am.getAccountsByType("com.google");
-	}
+    private void requestToken() {
+        Account userAccount = null;
+        String user = authPreferences.getUser();
+        for (Account account : accountManager.getAccountsByType("com.google")) {
+            if (account.name.equals(user)) {
+                userAccount = account;
+
+                break;
+            }
+        }
+
+        accountManager.getAuthToken(userAccount, "oauth2:" + SCOPE, null, this,
+                new OnTokenAcquired(), null);
+    }
+
+    /**
+     * call this method if your token expired, or you want to request a new
+     * token for whatever reason. call requestToken() again afterwards in order
+     * to get a new token.
+     */
+    private void invalidateToken() {
+        AccountManager accountManager = AccountManager.get(this);
+        accountManager.invalidateAuthToken("com.google",
+                authPreferences.getToken());
+
+        authPreferences.setToken(null);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK) {
+            if (requestCode == AUTHORIZATION_CODE) {
+                requestToken();
+            } else if (requestCode == ACCOUNT_CODE) {
+                String accountName = data
+                        .getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+                authPreferences.setUser(accountName);
+
+                // invalidate old tokens which might be cached. we want a fresh
+                // one, which is guaranteed to work
+                invalidateToken();
+
+                requestToken();
+            }
+        }
+    }
+
+    private class OnTokenAcquired implements AccountManagerCallback<Bundle> {
+
+        @Override
+        public void run(AccountManagerFuture<Bundle> result) {
+            try {
+                Bundle bundle = result.getResult();
+
+                Intent launch = (Intent) bundle.get(AccountManager.KEY_INTENT);
+                if (launch != null) {
+                    startActivityForResult(launch, AUTHORIZATION_CODE);
+                } else {
+                    String token = bundle
+                            .getString(AccountManager.KEY_AUTHTOKEN);
+
+                    authPreferences.setToken(token);
+                    Intent intent = new Intent(URLListActivity.this, URLListActivity.class);
+                    startActivity(intent);
+                    finish();
+
+                    // Do stuff with token
+                }
+            } catch (Exception e) {
+                Log.e("OnTokenAcquired run", "Failed to acquire token");
+//                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void logout() {
+        invalidateToken();
+        AccountManager accountManager = AccountManager.get(this);
+        accountManager.invalidateAuthToken("com.google",
+                authPreferences.getToken());
+
+        authPreferences.logout();
+        loggedIn = false;
+    }
 
     private void newURLDialog() {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);

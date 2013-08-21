@@ -10,6 +10,9 @@
             android:id="@+id/login"
             android:title="@string/login"/>
     <item
+            android:id="@+id/logout"
+            android:title="@string/logout"/>
+    <item
             android:id="@+id/shorten_new_URL"
             android:title="@string/shorten_new_URL"
             android:icon="@drawable/ic_menu_content_edit"
@@ -19,7 +22,6 @@
             android:title="@string/refresh_url_list"
             android:icon="@drawable/ic_menu_navigation_refresh"
             android:showAsAction="ifRoom" />
-
     <item
         android:id="@+id/send_feedback"
         android:title="@string/send_feedback"
