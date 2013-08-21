@@ -52,8 +52,6 @@ public class URLDetailFragment extends Fragment {
             // to load content from a content provider.
             mItem = ShortenedURLContent.ITEM_MAP.get(getArguments().getString(ARG_ITEM_ID));
         }
-
-        getURLStats();
     }
 
     @Override
@@ -66,10 +64,12 @@ public class URLDetailFragment extends Fragment {
             ((TextView) rootView.findViewById(R.id.url_detail)).setText(mItem.getMetrics());
         }
 
+        getURLStats(rootView);
+
         return rootView;
     }
 
-    private void getURLStats() {
+    private void getURLStats(View v) {
         JSONObject result;
         String resultURL = null;
         String longUrl = null;
@@ -98,6 +98,9 @@ public class URLDetailFragment extends Fragment {
         } catch (TimeoutException e) {
             e.printStackTrace();
         }
+
+        mItem.setMetrics(longUrl);
+        ((TextView) v.findViewById(R.id.url_detail)).setText(mItem.getMetrics());
 
 //        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
 //        alert.setTitle("Long URL");

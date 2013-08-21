@@ -65,5 +65,9 @@ public class ShortenedURLContent {
 		public String getMetrics() {
 			return this.metrics;
 		}
+
+        public void setMetrics(String input) {
+            this.metrics = input;
+        }
     }
 }

@@ -126,7 +126,7 @@ public class URLListActivity extends FragmentActivity
             menu.findItem(R.id.logout).setVisible(false);
         }
 
-		return true;
+		return super.onCreateOptionsMenu(menu);
 	}
 
     @Override

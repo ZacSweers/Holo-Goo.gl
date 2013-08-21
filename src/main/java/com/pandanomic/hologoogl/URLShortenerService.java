@@ -65,7 +65,6 @@ public class URLShortenerService  extends Service {
                 }
                 mNotifyMgr.cancel(mNotificationId);
                 unregisterReceiver(this);
-                stopService(originalIntent);
             }
         };
 
@@ -75,11 +74,11 @@ public class URLShortenerService  extends Service {
         PendingIntent piCopy = PendingIntent.getBroadcast(getBaseContext(), 0, copy, PendingIntent.FLAG_CANCEL_CURRENT);
         mBuilder.addAction(R.drawable.ic_menu_copy, "Copy", piCopy);
 
-//        IntentFilter intentFilterShare = new IntentFilter("com.pandanomic.ACTION_SHARE");
-//        getBaseContext().registerReceiver(broadcastReceiver, intentFilterShare);
-//        Intent share = new Intent("com.pandanomic.ACTION_SHARE");
-//        PendingIntent piShare = PendingIntent.getBroadcast(getBaseContext(), 0, share, PendingIntent.FLAG_CANCEL_CURRENT);
-//        mBuilder.addAction(R.drawable.ic_social_share, "Share", piShare);
+        IntentFilter intentFilterShare = new IntentFilter("com.pandanomic.ACTION_SHARE");
+        getBaseContext().registerReceiver(broadcastReceiver, intentFilterShare);
+        Intent share = new Intent("com.pandanomic.ACTION_SHARE");
+        PendingIntent piShare = PendingIntent.getBroadcast(getBaseContext(), 0, share, PendingIntent.FLAG_CANCEL_CURRENT);
+        mBuilder.addAction(R.drawable.ic_social_share, "Share", piShare);
 
         mBuilder.setProgress(0, 0, false);
         mBuilder.setContentTitle("URL Shortened!");
@@ -93,13 +92,16 @@ public class URLShortenerService  extends Service {
         ClipData clip = ClipData.newPlainText("Shortened URL", url);
         clipboard.setPrimaryClip(clip);
         Toast.makeText(getBaseContext(), "Copied!", Toast.LENGTH_SHORT).show();
+        stopService(originalIntent);
     }
 
     private void shareURL(String url) {
-        Intent intent = new Intent(Intent.ACTION_SEND);
+        final Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.setType("text/plain");
         intent.putExtra(Intent.EXTRA_TEXT, url);
         intent.putExtra(Intent.EXTRA_SUBJECT, "Shared from Holo Goo.gl");
-        startActivity(Intent.createChooser(intent, "Share"));
+        getBaseContext().startActivity(intent);
+        stopService(originalIntent);
     }
 }
