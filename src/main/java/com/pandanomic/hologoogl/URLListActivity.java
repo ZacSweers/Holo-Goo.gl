@@ -13,7 +13,9 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -53,6 +55,8 @@ public class URLListActivity extends FragmentActivity
     private AccountManager accountManager;
     private final String SCOPE = "https://www.googleapis.com/auth/urlshortener";
     private boolean loggedIn = false;
+    private int APIVersion;
+    private Menu optionsMenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +77,8 @@ public class URLListActivity extends FragmentActivity
                     .setActivateOnItemClick(true);
         }
 
+        APIVersion = Build.VERSION.SDK_INT;
+
 
         accountManager = AccountManager.get(this);
         authPreferences = new AuthPreferences(this);
@@ -85,6 +91,8 @@ public class URLListActivity extends FragmentActivity
             // No account, refresh only anonymous ones and leave button alone
         }
 
+//        super.onCreate(savedInstanceState);
+
         // TODO: If exposing deep links into your app, handle intents here.
     }
 
@@ -95,6 +103,7 @@ public class URLListActivity extends FragmentActivity
                 newURLDialog();
                 return true;
             case R.id.refresh_url_list:
+                refreshList();
                 return true;
             case R.id.login:
                 accountSetup();
@@ -109,13 +118,13 @@ public class URLListActivity extends FragmentActivity
             case R.id.send_feedback:
                 sendFeedback();
                 return true;
-            default:
-                return super.onOptionsItemSelected(item);
         }
+        return super.onOptionsItemSelected(item);
     }
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
+        this.optionsMenu = menu;
 		getMenuInflater().inflate(R.menu.urllist_menu, menu);
 
         if (loggedIn) {
@@ -162,6 +171,9 @@ public class URLListActivity extends FragmentActivity
         } else {
             // In single-pane mode, simply start the detail activity
             // for the selected item ID.
+            if (!checkNetwork()) {
+                return;
+            }
             Intent detailIntent = new Intent(this, URLDetailActivity.class);
             detailIntent.putExtra(URLDetailFragment.ARG_ITEM_ID, id);
             startActivity(detailIntent);
@@ -260,6 +272,27 @@ public class URLListActivity extends FragmentActivity
         loggedIn = false;
     }
 
+    private void refreshList() {
+        if (!checkNetwork()) {
+            return;
+        }
+        setRefreshActionButtonState(true);
+    }
+
+    private void setRefreshActionButtonState(final boolean refreshing) {
+        if (optionsMenu != null) {
+            final MenuItem refreshItem = optionsMenu
+                    .findItem(R.id.refresh_metrics);
+            if (refreshItem != null) {
+                if (refreshing) {
+                    refreshItem.setActionView(R.layout.actionbar_indeterminate_progress);
+                } else {
+                    refreshItem.setActionView(null);
+                }
+            }
+        }
+    }
+
     private void newURLDialog() {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setTitle("Shorten New URL");
@@ -296,8 +329,7 @@ public class URLListActivity extends FragmentActivity
     private void generateShortenedURL(String input) {
         ConnectivityManager connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-        if (!(networkInfo != null && networkInfo.isConnected())) {
-            Toast.makeText(this, "Check your internet connection", Toast.LENGTH_LONG).show();
+        if (!checkNetwork()) {
             return;
         }
         URLShortener shortener = new URLShortener();
@@ -351,5 +383,32 @@ public class URLListActivity extends FragmentActivity
         gmail.putExtra(Intent.EXTRA_SUBJECT, "Holo Goo.gl Feedback");
         gmail.setType("plain/text");
         startActivity(gmail);
+    }
+
+    private boolean checkNetwork() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        boolean airplaneMode = checkAirplaneMode();
+        if (!(networkInfo != null && networkInfo.isConnected())) {
+            if (airplaneMode) {
+                Toast.makeText(this, "Please disable airplane mode or turn on WiFi first!", Toast.LENGTH_LONG).show();
+                return false;
+            }
+            Toast.makeText(this, "Could not connect, please check your internet connection.", Toast.LENGTH_LONG).show();
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean checkAirplaneMode() {
+        if (APIVersion >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            return Settings.System.getInt(getBaseContext().getContentResolver(),
+                    Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
+        }
+        else {
+            return Settings.System.getInt(getBaseContext().getContentResolver(),
+                    Settings.System.AIRPLANE_MODE_ON, 0) != 0;
+        }
     }
 }
