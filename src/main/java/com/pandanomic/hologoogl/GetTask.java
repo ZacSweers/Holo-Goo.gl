@@ -28,8 +28,9 @@ public class GetTask extends AsyncTask<String, Void, JSONObject> {
 
     private Activity parentActivity;
     private ProgressDialog progressDialog;
-    private int type;   /* 0 = simple, 1 = full, 2 = list */
-    private String GETURL = "https://www.googleapis.com/urlshortener/v1/url?shortUrl=http://";
+    private int type;   /* 0 = simple, 1 = full, 2 = history */
+    private String GETURL = "https://www.googleapis.com/urlshortener/v1/url";
+    private String APIKey = "AIzaSyC-EoLxBpZkphFCneWml4TXZB1dHg5rMFs";
 
     public GetTask(Activity activity, int type) {
         parentActivity = activity;
@@ -45,23 +46,26 @@ public class GetTask extends AsyncTask<String, Void, JSONObject> {
 
     @Override
     protected JSONObject doInBackground(String... params) {
-        String shortenedURL = params[0];
-        GETURL += shortenedURL;
+        String shortenedURL = "";
+        String authToken = "";
 
-        if (type == 1) {
-            GETURL += "&projection=FULL";
-        }
-
-        JSONObject results;
-
-        /**
-         * Check network connection
-         * TODO: timeout as well
-         */
         if (!networkAvailable()) {
             Toast.makeText(parentActivity, "Not connected to the internet", Toast.LENGTH_LONG).show();
             return null;
         }
+
+        if (type == 1) {
+            shortenedURL = params[0];
+            GETURL += "?shortUrl=http://" + shortenedURL;
+            GETURL += "&projection=FULL";
+        }
+
+        if (type == 2) {
+            authToken = params[0];
+            GETURL += "/history?access_token="+authToken;
+        }
+
+        JSONObject results;
 
         Log.d("googl", "Fetching data");
         try {
@@ -71,6 +75,9 @@ public class GetTask extends AsyncTask<String, Void, JSONObject> {
 
             DefaultHttpClient client = new DefaultHttpClient(httpParams);
             HttpGet get = new HttpGet(GETURL);
+//            if (type == 2) {
+//                get.setHeader("Authorization", authToken);
+//            }
 //            post.setEntity(new StringEntity("{\"longUrl\": \"" + sharedURL + "\"}"));
 //            post.setHeader("Content-Type", "application/json");
 

@@ -1,5 +1,6 @@
 package com.pandanomic.hologoogl;
 
+import android.R;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -8,6 +9,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.pandanomic.hologoogl.URLContent.ShortenedURLContent;
+
+import java.util.ArrayList;
 
 /**
  * A list fragment representing a list of URLs. This fragment
@@ -20,6 +23,10 @@ import com.pandanomic.hologoogl.URLContent.ShortenedURLContent;
  */
 public class URLListFragment extends ListFragment {
 
+    public ArrayAdapter<ShortenedURLContent.ShortenedURLItem> adapter;
+
+    public ArrayList<String> list;
+    public ArrayAdapter<String> stringAdapter;
     /**
      * The serialization (saved instance state) Bundle key representing the
      * activated item position. Only used on tablets.
@@ -71,11 +78,16 @@ public class URLListFragment extends ListFragment {
         super.onCreate(savedInstanceState);
 
         // TODO: replace with a real list adapter.
-        setListAdapter(new ArrayAdapter<ShortenedURLContent.ShortenedURLItem>(
-                getActivity(),
-                android.R.layout.simple_list_item_activated_1,
-                android.R.id.text1,
-                ShortenedURLContent.ITEMS));
+//        adapter = new ArrayAdapter<ShortenedURLContent.ShortenedURLItem>(getActivity(), R.layout.simple_list_item_activated_1, ShortenedURLContent.ITEMS);
+//        setListAdapter(adapter);
+
+        list = new ArrayList<String>();
+        list.add("goo.gl/SYFV4");
+        list.add("goo.gl/4DR2e");
+        list.add("goo.gl/0XsgU");
+
+        stringAdapter = new ArrayAdapter<String>(getActivity(), R.layout.simple_list_item_activated_1, list);
+        setListAdapter(stringAdapter);
     }
 
     @Override
@@ -115,7 +127,8 @@ public class URLListFragment extends ListFragment {
 
         // Notify the active callbacks interface (the activity, if the
         // fragment is attached to one) that an item has been selected.
-        mCallbacks.onItemSelected(ShortenedURLContent.ITEMS.get(position).id);
+//        mCallbacks.onItemSelected(ShortenedURLContent.ITEMS.get(position).id);
+        mCallbacks.onItemSelected(list.get(position));
     }
 
     @Override
@@ -147,5 +160,16 @@ public class URLListFragment extends ListFragment {
         }
 
         mActivatedPosition = position;
+    }
+
+    public void addURL(String url) {
+        list.add(url);
+        stringAdapter.notifyDataSetChanged();
+    }
+
+    public void addList(ArrayList<String> urls) {
+        list.clear();
+        list = new ArrayList<String>(urls);
+        stringAdapter.notifyDataSetChanged();
     }
 }

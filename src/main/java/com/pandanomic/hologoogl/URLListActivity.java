@@ -20,9 +20,16 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import org.json.JSONObject;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 
 /**
@@ -57,11 +64,14 @@ public class URLListActivity extends FragmentActivity
     private boolean loggedIn = false;
     private int APIVersion;
     private Menu optionsMenu;
+    private URLListFragment listFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_url_list);
+        listFragment = ((URLListFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.url_list));
 
         if (findViewById(R.id.url_detail_container) != null) {
             // The detail container view will be present only in the
@@ -90,8 +100,6 @@ public class URLListActivity extends FragmentActivity
         } else {
             // No account, refresh only anonymous ones and leave button alone
         }
-
-//        super.onCreate(savedInstanceState);
 
         // TODO: If exposing deep links into your app, handle intents here.
     }
@@ -161,7 +169,8 @@ public class URLListActivity extends FragmentActivity
             // adding or replacing the detail fragment using a
             // fragment transaction.
             Bundle arguments = new Bundle();
-            arguments.putString(URLDetailFragment.ARG_ITEM_ID, id);
+//            arguments.putString(URLDetailFragment.ARG_ITEM_ID, id);
+            arguments.putString(URLDetailFragment.ARG_URL_STRING, id);
             URLDetailFragment fragment = new URLDetailFragment();
             fragment.setArguments(arguments);
             getSupportFragmentManager().beginTransaction()
@@ -175,7 +184,8 @@ public class URLListActivity extends FragmentActivity
                 return;
             }
             Intent detailIntent = new Intent(this, URLDetailActivity.class);
-            detailIntent.putExtra(URLDetailFragment.ARG_ITEM_ID, id);
+//            detailIntent.putExtra(URLDetailFragment.ARG_ITEM_ID, id);
+            detailIntent.putExtra(URLDetailFragment.ARG_URL_STRING, id);
             startActivity(detailIntent);
         }
     }
@@ -276,7 +286,43 @@ public class URLListActivity extends FragmentActivity
         if (!checkNetwork()) {
             return;
         }
-        setRefreshActionButtonState(true);
+
+        JSONObject result;
+        String resultURL = null;
+        String longUrl = null;
+        String created = null;
+        String authToken = authPreferences.getToken();
+        try {
+            result = new GetTask(this, 1).execute(authToken).get(5, TimeUnit.SECONDS);
+
+            Log.d("get", result.toString());
+
+            if (result == null) {
+                Toast.makeText(this, "Error retrieving data", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            // TODO: Check for error
+
+//            resultURL = result.getString("id");
+//            longUrl = result.getString("longUrl");
+//            created = result.getString("created");
+
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("Done?");
+        alert.setCancelable(true);
+//        alert.setMessage(longUrl);
+        alert.show();
+//        setRefreshActionButtonState(true);
     }
 
     private void setRefreshActionButtonState(final boolean refreshing) {
@@ -306,24 +352,55 @@ public class URLListActivity extends FragmentActivity
             public void onClick(DialogInterface dialog, int which) {
                 String urlToShare = input.getText().toString();
 
-                // Hide keyboard
-                InputMethodManager imm = (InputMethodManager)getSystemService(
-                        Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
-
-                generateShortenedURL(urlToShare);
-
+                // Make sure it's not empty
+                if (urlToShare == null || urlToShare.matches("")) {
+                    Toast.makeText(getBaseContext(), "Please enter a URL!", Toast.LENGTH_LONG).show();
+                } else {
+                    // Let's go get that URL!
+                    // Trim any trailing spaces (sometimes keyboards will autocorrect .com with a space at the end)
+                    generateShortenedURL(urlToShare.trim());
+                }
             }
         });
 
         alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-
+//                hideKeyboard(input);
             }
         });
 
+        if (APIVersion >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    hideKeyboard(input);
+                }
+            });
+        }
+
         alert.show();
+
+        // Show keyboard
+        input.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                input.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        InputMethodManager imm = (InputMethodManager) getBaseContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+                    }
+                });
+            }
+        });
+        input.requestFocus();
+    }
+
+    private void hideKeyboard(EditText input) {
+        InputMethodManager imm = (InputMethodManager)getSystemService(
+                Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
     }
 
     private void generateShortenedURL(String input) {
@@ -356,7 +433,16 @@ public class URLListActivity extends FragmentActivity
             }
         });
 
+        if (APIVersion >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    listFragment.addURL(resultURL.substring(7));
+                }
+            });
+        }
         alert.show();
+
     }
 
     private void copyURL(String input) {
@@ -410,5 +496,9 @@ public class URLListActivity extends FragmentActivity
             return Settings.System.getInt(getBaseContext().getContentResolver(),
                     Settings.System.AIRPLANE_MODE_ON, 0) != 0;
         }
+    }
+
+    private void reauthorizeGoogle() {
+        // if response is a 401-unauthorized
     }
 }

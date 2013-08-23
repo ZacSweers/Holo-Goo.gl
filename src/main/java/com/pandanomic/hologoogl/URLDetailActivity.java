@@ -42,8 +42,8 @@ public class URLDetailActivity extends FragmentActivity {
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
             Bundle arguments = new Bundle();
-            arguments.putString(URLDetailFragment.ARG_ITEM_ID,
-                    getIntent().getStringExtra(URLDetailFragment.ARG_ITEM_ID));
+            arguments.putString(URLDetailFragment.ARG_URL_STRING,
+                    getIntent().getStringExtra(URLDetailFragment.ARG_URL_STRING));
             URLDetailFragment fragment = new URLDetailFragment();
             fragment.setArguments(arguments);
             getSupportFragmentManager().beginTransaction()

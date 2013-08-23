@@ -2,13 +2,12 @@ package com.pandanomic.hologoogl;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.pandanomic.hologoogl.URLContent.ShortenedURLContent;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,12 +27,12 @@ public class URLDetailFragment extends Fragment {
      * The fragment argument representing the item ID that this fragment
      * represents.
      */
-    public static final String ARG_ITEM_ID = "item_id";
+    public static final String ARG_URL_STRING = "url_string";
 
     /**
      * The URLContent content this fragment is presenting.
      */
-    private ShortenedURLContent.ShortenedURLItem mItem;
+    private String shortenedURL;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -46,11 +45,8 @@ public class URLDetailFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (getArguments().containsKey(ARG_ITEM_ID)) {
-            // Load the URLContent content specified by the fragment
-            // arguments. In a real-world scenario, use a Loader
-            // to load content from a content provider.
-            mItem = ShortenedURLContent.ITEM_MAP.get(getArguments().getString(ARG_ITEM_ID));
+        if (getArguments().containsKey(ARG_URL_STRING)) {
+            shortenedURL = getArguments().getString(ARG_URL_STRING);
         }
     }
 
@@ -59,9 +55,8 @@ public class URLDetailFragment extends Fragment {
             Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_url_detail, container, false);
 
-        // Show the URLContent content as text in a TextView.
-        if (mItem != null) {
-            ((TextView) rootView.findViewById(R.id.url_detail)).setText(mItem.getMetrics());
+        if (shortenedURL != null) {
+            ((TextView) rootView.findViewById(R.id.url_detail)).setText(shortenedURL);
         }
 
         getURLStats(rootView);
@@ -75,7 +70,9 @@ public class URLDetailFragment extends Fragment {
         String longUrl = null;
         String created = null;
         try {
-            result = new GetTask(this.getActivity(), 1).execute(mItem.content).get(5, TimeUnit.SECONDS);
+            result = new GetTask(this.getActivity(), 1).execute(shortenedURL).get(5, TimeUnit.SECONDS);
+
+            Log.d("getURLStats", result.toString());
 
             if (result == null) {
                 Toast.makeText(this.getActivity(), "Error retrieving data", Toast.LENGTH_LONG).show();
@@ -99,8 +96,7 @@ public class URLDetailFragment extends Fragment {
             e.printStackTrace();
         }
 
-        mItem.setMetrics(longUrl);
-        ((TextView) v.findViewById(R.id.url_detail)).setText(mItem.getMetrics());
+        ((TextView) v.findViewById(R.id.url_detail)).setText(longUrl);
 
 //        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
 //        alert.setTitle("Long URL");

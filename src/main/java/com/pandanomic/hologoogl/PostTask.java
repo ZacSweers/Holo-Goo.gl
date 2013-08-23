@@ -21,6 +21,8 @@ import java.io.UnsupportedEncodingException;
 
 public class PostTask extends AsyncTask<String, Void, JSONObject> {
 
+    private String APIKey = "AIzaSyC-EoLxBpZkphFCneWml4TXZB1dHg5rMFs";
+
     @Override
     protected void onPreExecute() {
     }
