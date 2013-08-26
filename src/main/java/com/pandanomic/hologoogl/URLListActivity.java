@@ -17,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -345,6 +346,7 @@ public class URLListActivity extends FragmentActivity
         alert.setCancelable(true);
 
         final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
         input.setHint("Type or paste a URL here");
         alert.setView(input);
         alert.setPositiveButton("Go", new DialogInterface.OnClickListener() {
@@ -356,6 +358,7 @@ public class URLListActivity extends FragmentActivity
                 if (urlToShare == null || urlToShare.matches("")) {
                     Toast.makeText(getBaseContext(), "Please enter a URL!", Toast.LENGTH_LONG).show();
                 } else {
+                    hideKeyboard(input);
                     // Let's go get that URL!
                     // Trim any trailing spaces (sometimes keyboards will autocorrect .com with a space at the end)
                     generateShortenedURL(urlToShare.trim());
@@ -366,7 +369,7 @@ public class URLListActivity extends FragmentActivity
         alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-//                hideKeyboard(input);
+                hideKeyboard(input);
             }
         });
 
