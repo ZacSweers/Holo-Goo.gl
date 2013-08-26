@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.util.Patterns;
 import android.widget.Toast;
 
 public class URLShortenerService  extends Service {
@@ -21,6 +22,12 @@ public class URLShortenerService  extends Service {
     public int onStartCommand(Intent intent, int flags, int stardId) {
         originalIntent = intent;
         String sharedURL = intent.getStringExtra("URL");
+
+        if (!Patterns.WEB_URL.matcher(sharedURL).matches()) {
+            // Validate URL pattern
+            Toast.makeText(getBaseContext(), "Please enter a valid URL!", Toast.LENGTH_LONG).show();
+            stopService(originalIntent);
+        }
 
         URLShortener shortener = new URLShortener();
         String shortenedURL = shortener.generate(sharedURL);
@@ -91,7 +98,7 @@ public class URLShortenerService  extends Service {
                 getBaseContext().getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("Shortened URL", url);
         clipboard.setPrimaryClip(clip);
-        Toast.makeText(getBaseContext(), "Copied!", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getBaseContext(), "Copied to clipboard!", Toast.LENGTH_SHORT).show();
         stopService(originalIntent);
     }
 

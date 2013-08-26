@@ -5,6 +5,7 @@ import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -19,6 +20,7 @@ import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.text.InputType;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -357,7 +359,12 @@ public class URLListActivity extends FragmentActivity
                 // Make sure it's not empty
                 if (urlToShare == null || urlToShare.matches("")) {
                     Toast.makeText(getBaseContext(), "Please enter a URL!", Toast.LENGTH_LONG).show();
-                } else {
+                }
+                else if (!Patterns.WEB_URL.matcher(urlToShare).matches()) {
+                    // Validate URL pattern
+                    Toast.makeText(getBaseContext(), "Please enter a valid URL!", Toast.LENGTH_LONG).show();
+                }
+                else {
                     hideKeyboard(input);
                     // Let's go get that URL!
                     // Trim any trailing spaces (sometimes keyboards will autocorrect .com with a space at the end)
@@ -412,9 +419,20 @@ public class URLListActivity extends FragmentActivity
         if (!checkNetwork()) {
             return;
         }
+
+        ProgressDialog dialog = new ProgressDialog(this);
+        dialog.setTitle("Shortening...");
+        dialog.setMessage("Please wait.");
+        dialog.setIndeterminate(true);
+        dialog.setCancelable(false);
+        dialog.show();
+
         URLShortener shortener = new URLShortener();
         Log.d("hologoogl", "generating");
         final String resultURL = shortener.generate(input);
+        if (dialog != null) {
+            dialog.dismiss();
+        }
         Log.d("hologoogl", "done generating");
 
         Log.d("hologoogl", "Generated " + resultURL);
@@ -453,7 +471,7 @@ public class URLListActivity extends FragmentActivity
                 getBaseContext().getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("Shortened URL", input);
         clipboard.setPrimaryClip(clip);
-        Toast.makeText(getBaseContext(), "Copied!", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getBaseContext(), "Copied to clipboard!", Toast.LENGTH_SHORT).show();
     }
 
     private void shareURL(String input) {
