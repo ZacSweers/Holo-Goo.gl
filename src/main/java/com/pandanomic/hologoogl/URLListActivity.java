@@ -28,8 +28,11 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -301,7 +304,7 @@ public class URLListActivity extends FragmentActivity
         String created = null;
         String authToken = authPreferences.getToken();
         try {
-            result = new GetTask(this, 2).execute(authToken).get(5, TimeUnit.SECONDS);
+            result = new GetTask(this, 2).execute(authToken).get();
 
             Log.d("get", result.toString());
 
@@ -309,6 +312,21 @@ public class URLListActivity extends FragmentActivity
                 Toast.makeText(this, "Error retrieving data", Toast.LENGTH_LONG).show();
                 return;
             }
+
+            int totalItems = result.getInt("totalItems");
+
+            JSONArray array = result.getJSONArray("items");
+            Log.d("array", totalItems + " " + array.toString());
+
+            ArrayList<String> list = new ArrayList<String>();
+
+            JSONObject tmpobj = array.getJSONObject(0);
+            Log.d("object", tmpobj.getString("id"));
+            for (int i = 0; i < 30; ++i) {
+                list.add(array.getJSONObject(i).getString("id"));
+            }
+
+            listFragment.addList(list);
 
             // TODO: Check for error
 
@@ -321,15 +339,10 @@ public class URLListActivity extends FragmentActivity
             e.printStackTrace();
         } catch (ExecutionException e) {
             e.printStackTrace();
-        } catch (TimeoutException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        AlertDialog.Builder alert = new AlertDialog.Builder(this);
-        alert.setTitle("Done?");
-        alert.setCancelable(true);
-//        alert.setMessage(longUrl);
-        alert.show();
 //        setRefreshActionButtonState(true);
     }
 

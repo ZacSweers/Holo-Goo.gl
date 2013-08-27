@@ -4,6 +4,7 @@ import android.R;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -82,9 +83,9 @@ public class URLListFragment extends ListFragment {
 //        setListAdapter(adapter);
 
         list = new ArrayList<String>();
-        list.add("goo.gl/SYFV4");
-        list.add("goo.gl/4DR2e");
-        list.add("goo.gl/0XsgU");
+        list.add("http://goo.gl/SYFV4");
+        list.add("http://goo.gl/4DR2e");
+        list.add("http://goo.gl/0XsgU");
 
         stringAdapter = new ArrayAdapter<String>(getActivity(), R.layout.simple_list_item_activated_1, list);
         setListAdapter(stringAdapter);
@@ -128,7 +129,9 @@ public class URLListFragment extends ListFragment {
         // Notify the active callbacks interface (the activity, if the
         // fragment is attached to one) that an item has been selected.
 //        mCallbacks.onItemSelected(ShortenedURLContent.ITEMS.get(position).id);
-        mCallbacks.onItemSelected(list.get(position));
+        // substring to remove http://
+        Log.d("item selected", list.get(position).substring(7));
+        mCallbacks.onItemSelected(list.get(position).substring(7));
     }
 
     @Override
@@ -169,7 +172,9 @@ public class URLListFragment extends ListFragment {
 
     public void addList(ArrayList<String> urls) {
         list.clear();
-        list = new ArrayList<String>(urls);
+        Log.d("listFrag", urls.get(0));
+        list.addAll(urls);
+        Log.d("listFrag", list.get(0));
         stringAdapter.notifyDataSetChanged();
     }
 }
