@@ -296,7 +296,7 @@ public class URLListActivity extends FragmentActivity
         String created = null;
         String authToken = authPreferences.getToken();
         try {
-            result = new GetTask(this, 1).execute(authToken).get(5, TimeUnit.SECONDS);
+            result = new GetTask(this, 2).execute(authToken).get(5, TimeUnit.SECONDS);
 
             Log.d("get", result.toString());
 

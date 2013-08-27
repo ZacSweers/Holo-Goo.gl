@@ -30,7 +30,7 @@ public class GetTask extends AsyncTask<String, Void, JSONObject> {
     private ProgressDialog progressDialog;
     private int type;   /* 0 = simple, 1 = full, 2 = history */
     private String GETURL = "https://www.googleapis.com/urlshortener/v1/url";
-    private String APIKey = "AIzaSyC-EoLxBpZkphFCneWml4TXZB1dHg5rMFs";
+    private String APIKey = "AIzaSyAgro3AP5Uuxk-UdAudorws01sn3u_HJ-Y";
 
     public GetTask(Activity activity, int type) {
         parentActivity = activity;
@@ -62,7 +62,7 @@ public class GetTask extends AsyncTask<String, Void, JSONObject> {
 
         if (type == 2) {
             authToken = params[0];
-            GETURL += "/history?access_token="+authToken;
+            GETURL += "/history";
         }
 
         JSONObject results;
@@ -75,9 +75,10 @@ public class GetTask extends AsyncTask<String, Void, JSONObject> {
 
             DefaultHttpClient client = new DefaultHttpClient(httpParams);
             HttpGet get = new HttpGet(GETURL);
-//            if (type == 2) {
-//                get.setHeader("Authorization", authToken);
-//            }
+            if (type == 2) {
+                Log.d("Getting history", GETURL);
+                get.setHeader("Authorization", "Bearer " + authToken);
+            }
 //            post.setEntity(new StringEntity("{\"longUrl\": \"" + sharedURL + "\"}"));
 //            post.setHeader("Content-Type", "application/json");
 
