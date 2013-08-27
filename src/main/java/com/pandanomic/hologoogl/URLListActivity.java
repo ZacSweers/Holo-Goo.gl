@@ -101,7 +101,8 @@ public class URLListActivity extends FragmentActivity
         loggedIn = authPreferences.loggedIn();
         if (authPreferences.getUser() != null && authPreferences.getToken() != null) {
             // Account exists, refresh stuff and make button log out
-            Toast.makeText(this, "Have token for: " + authPreferences.getToken(), Toast.LENGTH_LONG).show();
+//            Toast.makeText(this, "Have token for: " + authPreferences.getToken(), Toast.LENGTH_LONG).show();
+            reauthorizeGoogle();
             loggedIn = true;
         } else {
             // No account, refresh only anonymous ones and leave button alone
@@ -201,7 +202,7 @@ public class URLListActivity extends FragmentActivity
         startActivityForResult(intent, ACCOUNT_CODE);
     }
 
-    private void requestToken() {
+    private void requestToken(boolean passive) {
         Account userAccount = null;
         String user = authPreferences.getUser();
         for (Account account : accountManager.getAccountsByType("com.google")) {
@@ -213,7 +214,7 @@ public class URLListActivity extends FragmentActivity
         }
 
         accountManager.getAuthToken(userAccount, "oauth2:" + SCOPE, null, this,
-                new OnTokenAcquired(), null);
+                new OnTokenAcquired(passive), null);
     }
 
     /**
@@ -235,7 +236,7 @@ public class URLListActivity extends FragmentActivity
 
         if (resultCode == RESULT_OK) {
             if (requestCode == AUTHORIZATION_CODE) {
-                requestToken();
+                requestToken(false);
             } else if (requestCode == ACCOUNT_CODE) {
                 String accountName = data
                         .getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
@@ -245,12 +246,18 @@ public class URLListActivity extends FragmentActivity
                 // one, which is guaranteed to work
                 invalidateToken();
 
-                requestToken();
+                requestToken(false);
             }
         }
     }
 
     private class OnTokenAcquired implements AccountManagerCallback<Bundle> {
+
+        private boolean passive = false;
+
+        public OnTokenAcquired(boolean passive) {
+            this.passive = passive;
+        }
 
         @Override
         public void run(AccountManagerFuture<Bundle> result) {
@@ -265,9 +272,11 @@ public class URLListActivity extends FragmentActivity
                             .getString(AccountManager.KEY_AUTHTOKEN);
 
                     authPreferences.setToken(token);
-                    Intent intent = new Intent(URLListActivity.this, URLListActivity.class);
-                    startActivity(intent);
-                    finish();
+                    if (!passive) {
+                        Intent intent = new Intent(URLListActivity.this, URLListActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
 
                     // Do stuff with token
                 }
@@ -539,5 +548,8 @@ public class URLListActivity extends FragmentActivity
 
     private void reauthorizeGoogle() {
         // if response is a 401-unauthorized
+        Log.i("URLList", "reauthorizing");
+        invalidateToken();
+        requestToken(true);
     }
 }
