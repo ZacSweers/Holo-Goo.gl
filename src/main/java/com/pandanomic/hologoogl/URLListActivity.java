@@ -290,6 +290,11 @@ public class URLListActivity extends FragmentActivity
             return;
         }
 
+        if (!loggedIn) {
+            Toast.makeText(this, "Please log in first", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         JSONObject result;
         String resultURL = null;
         String longUrl = null;
