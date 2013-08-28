@@ -33,9 +33,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 
 /**
@@ -312,47 +309,33 @@ public class URLListActivity extends FragmentActivity
         String longUrl = null;
         String created = null;
         String authToken = authPreferences.getToken();
+        new RefreshListTask(this).execute(authToken);
+    }
+
+    public void refreshCallback(JSONObject result) {
+        if (result == null) {
+            Toast.makeText(this, "Error retrieving data", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        ArrayList<String> list = new ArrayList<String>();
+
         try {
-            result = new GetTask(this, 2).execute(authToken).get();
-
-            Log.d("get", result.toString());
-
-            if (result == null) {
-                Toast.makeText(this, "Error retrieving data", Toast.LENGTH_LONG).show();
-                return;
-            }
-
             int totalItems = result.getInt("totalItems");
 
             JSONArray array = result.getJSONArray("items");
             Log.d("array", totalItems + " " + array.toString());
-
-            ArrayList<String> list = new ArrayList<String>();
 
             JSONObject tmpobj = array.getJSONObject(0);
             Log.d("object", tmpobj.getString("id"));
             for (int i = 0; i < 30; ++i) {
                 list.add(array.getJSONObject(i).getString("id"));
             }
-
-            listFragment.addList(list);
-
-            // TODO: Check for error
-
-//            resultURL = result.getString("id");
-//            longUrl = result.getString("longUrl");
-//            created = result.getString("created");
-
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-//        setRefreshActionButtonState(true);
+        listFragment.addList(list);
     }
 
     private void setRefreshActionButtonState(final boolean refreshing) {
@@ -407,6 +390,7 @@ public class URLListActivity extends FragmentActivity
             }
         });
 
+        // hide keyboard if the dialog is dismissed
         if (APIVersion >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 @Override
@@ -441,8 +425,6 @@ public class URLListActivity extends FragmentActivity
     }
 
     private void generateShortenedURL(String input) {
-        ConnectivityManager connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
         if (!checkNetwork()) {
             return;
         }

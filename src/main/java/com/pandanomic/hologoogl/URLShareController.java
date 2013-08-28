@@ -8,6 +8,8 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import java.lang.reflect.Method;
+
 public class URLShareController extends Activity {
 
     @Override
@@ -31,6 +33,16 @@ public class URLShareController extends Activity {
             i.putExtra("URL", sharedURL);
             startService(i);
             Toast.makeText(this, "Generating URL, check notification bar", Toast.LENGTH_LONG).show();
+            Object service = getSystemService("statusbar");
+
+            // Expand notifications panel
+            try {
+                Class<?> statusbarManager = Class.forName("android.app.StatusBarManager");
+                Method expand = statusbarManager.getMethod("expandNotificationsPanel");
+                expand.invoke(service);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             finish();
 		}
     }
