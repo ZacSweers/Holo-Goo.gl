@@ -1,5 +1,6 @@
 package com.pandanomic.hologoogl;
 
+import android.app.Activity;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -12,12 +13,21 @@ import java.util.concurrent.TimeoutException;
 public class URLShortener {
 
     private final String LOGTAG = "URLShortener";
+    private String token;
+
+    public URLShortener() {
+
+    }
+
+    public URLShortener(String authToken) {
+        this.token = authToken;
+    }
 
     public String generate(String input) {
         JSONObject result;
         String resultURL = null;
         try {
-            result = new PostTask().execute(input).get(5000, TimeUnit.MILLISECONDS);
+            result = new PostTask(token).execute(input).get(5000, TimeUnit.MILLISECONDS);
 
             if (result == null) {
                 Log.e(LOGTAG, "Error retrieving data");

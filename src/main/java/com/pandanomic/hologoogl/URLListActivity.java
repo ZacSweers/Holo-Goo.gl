@@ -286,12 +286,15 @@ public class URLListActivity extends FragmentActivity
 
     private void logout() {
         invalidateToken();
-        AccountManager accountManager = AccountManager.get(this);
-        accountManager.invalidateAuthToken("com.google",
-                authPreferences.getToken());
+//        AccountManager accountManager = AccountManager.get(this);
+//        accountManager.invalidateAuthToken("com.google",
+//                authPreferences.getToken());
 
         authPreferences.logout();
         loggedIn = false;
+        Intent intent = new Intent(URLListActivity.this, URLListActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     private void refreshList() {
@@ -429,19 +432,19 @@ public class URLListActivity extends FragmentActivity
             return;
         }
 
-        ProgressDialog dialog = new ProgressDialog(this);
-        dialog.setTitle("Shortening...");
-        dialog.setMessage("Please wait.");
-        dialog.setIndeterminate(true);
-        dialog.setCancelable(false);
-        dialog.show();
+//        ProgressDialog dialog = new ProgressDialog(this);
+//        dialog.setTitle("Shortening...");
+//        dialog.setMessage("Please wait.");
+//        dialog.setIndeterminate(true);
+//        dialog.setCancelable(false);
+//        dialog.show();
 
-        URLShortener shortener = new URLShortener();
+        URLShortener shortener = new URLShortener(authPreferences.getToken());
         Log.d("hologoogl", "generating");
         final String resultURL = shortener.generate(input);
-        if (dialog != null) {
-            dialog.dismiss();
-        }
+//        if (dialog != null) {
+//            dialog.dismiss();
+//        }
         Log.d("hologoogl", "done generating");
 
         Log.d("hologoogl", "Generated " + resultURL);

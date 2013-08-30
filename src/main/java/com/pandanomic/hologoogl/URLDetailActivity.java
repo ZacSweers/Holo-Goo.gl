@@ -22,7 +22,7 @@ import org.json.JSONObject;
 public class URLDetailActivity extends FragmentActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected final void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_url_detail);
 
@@ -53,7 +53,7 @@ public class URLDetailActivity extends FragmentActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(final Menu menu) {
         getMenuInflater().inflate(R.menu.urldetail_menu, menu);
         return true;
     }

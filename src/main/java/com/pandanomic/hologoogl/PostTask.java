@@ -1,5 +1,6 @@
 package com.pandanomic.hologoogl;
 
+import android.app.Activity;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -21,6 +22,16 @@ import java.io.UnsupportedEncodingException;
 
 public class PostTask extends AsyncTask<String, Void, JSONObject> {
 
+    private String token;
+
+    public PostTask() {
+
+    }
+
+    public PostTask(String authToken) {
+        this.token = authToken;
+    }
+
     @Override
     protected void onPreExecute() {
     }
@@ -41,6 +52,9 @@ public class PostTask extends AsyncTask<String, Void, JSONObject> {
             HttpPost post = new HttpPost("https://www.googleapis.com/urlshortener/v1/url");
             post.setEntity(new StringEntity("{\"longUrl\": \"" + sharedURL + "\"}"));
             post.setHeader("Content-Type", "application/json");
+            if (token != null) {
+                post.setHeader("Authorization", "Bearer " + token);
+            }
 
             HttpResponse response = client.execute(post);
 
@@ -51,20 +65,16 @@ public class PostTask extends AsyncTask<String, Void, JSONObject> {
             }
 
             results = new JSONObject(new JSONTokener(builder.toString()));
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             String errorMessage = "Error: ";
             if (e instanceof UnsupportedEncodingException) {
                 errorMessage += "Encoding exception";
-            }
-            else if (e instanceof ClientProtocolException) {
+            } else if (e instanceof ClientProtocolException) {
                 errorMessage += "POST exception";
-            }
-            else if (e instanceof IOException) {
+            } else if (e instanceof IOException) {
                 errorMessage += "IO Exception in parsing response";
-            }
-            else {
+            } else {
                 errorMessage += "JSON parsing exception";
             }
 
