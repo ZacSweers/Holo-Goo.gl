@@ -35,14 +35,8 @@ public class URLShareController extends Activity {
             Toast.makeText(this, "Generating URL, check notification bar", Toast.LENGTH_LONG).show();
             Object service = getSystemService("statusbar");
 
-            // Expand notifications panel
-            try {
-                Class<?> statusbarManager = Class.forName("android.app.StatusBarManager");
-                Method expand = statusbarManager.getMethod("expandNotificationsPanel");
-                expand.invoke(service);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            // TODO: Expand notifications panel
+
             finish();
 		}
     }
