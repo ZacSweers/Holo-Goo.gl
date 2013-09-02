@@ -12,6 +12,7 @@ public class AuthPreferences {
 
     private SharedPreferences preferences;
 
+
     public AuthPreferences(Context context) {
         preferences = context
                 .getSharedPreferences("auth", Context.MODE_PRIVATE);
