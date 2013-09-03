@@ -38,6 +38,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.provider.SyncStateContract;
+import android.text.Html;
 import android.text.InputType;
 import android.util.Log;
 import android.util.Patterns;
@@ -325,6 +326,7 @@ public class URLListActivity extends ListActivity
 
             JSONObject tmpobj = array.getJSONObject(0);
             Log.d("object", tmpobj.getString("id"));
+            ITEMS.clear();
             for (int i = 0; i < 30; ++i) {
                 ITEMS.add(array.getJSONObject(i).getString("id"));
             }
@@ -598,8 +600,9 @@ public class URLListActivity extends ListActivity
                     public void onClick(DialogInterface dialog, int which) {
                     }
                 })
-                .setMessage("Short URL: " + metrics.getShortURL() + "\nLong URL: " +
-                        metrics.getLongURL() + "\nClicks: " + metrics.getClicks());
+                .setMessage(Html.fromHtml("<b><u> Short URL </u></b><br>" + metrics.getShortURL()
+                                + "<br><br><b><u>Long URL </u></b><br>" + metrics.getLongURL()
+                                + "<br><br><b><u>Clicks </u></b><br>" + metrics.getClicks()));
 
         alert.show();
 //        MetricsDialogFragment dialog = new MetricsDialogFragment();
