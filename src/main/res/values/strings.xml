@@ -17,5 +17,6 @@
     <string name="URLShortenerService">URL Shortener Service</string>
     <string name="send_feedback">Send Feedback</string>
     <string name="logout">Logout</string>
+    <string name="crash_toast_text">App crashed, compiling report</string>
 
 </resources>
