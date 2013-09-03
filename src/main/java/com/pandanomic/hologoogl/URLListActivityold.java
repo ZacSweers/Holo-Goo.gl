@@ -1,19 +1,4 @@
 package com.pandanomic.hologoogl;
-/*
- * Copyright 2013 Chris Banes
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -21,7 +6,6 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -35,7 +19,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.provider.SyncStateContract;
+import android.support.v4.app.FragmentActivity;
 import android.text.InputType;
 import android.util.Log;
 import android.util.Patterns;
@@ -43,10 +27,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.ListAdapter;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
@@ -67,17 +48,33 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
-import uk.co.senab.actionbarpulltorefresh.library.DefaultHeaderTransformer;
 import uk.co.senab.actionbarpulltorefresh.library.PullToRefreshAttacher;
 
-/**
- * This sample shows how to use ActionBar-PullToRefresh with a
- * {@link android.widget.ListView ListView}, and manually creating (and attaching) a
- * {@link PullToRefreshAttacher} to the view.
- */
-public class URLListActivity extends ListActivity
-        implements PullToRefreshAttacher.OnRefreshListener {
 
+/**
+ * An activity representing a list of URLs. This activity
+ * has different presentations for handset and tablet-size devices. On
+ * handsets, the activity presents a list of items, which when touched,
+ * lead to a {@link URLDetailActivity} representing
+ * item details. On tablets, the activity presents the list of items and
+ * item details side-by-side using two vertical panes.
+ * <p>
+ * The activity makes heavy use of fragments. The list of items is a
+ * {@link URLListFragment} and the item details
+ * (if present) is a {@link URLDetailFragment}.
+ * <p>
+ * This activity also implements the required
+ * {@link URLListFragment.Callbacks} interface
+ * to listen for item selections.
+ */
+public class URLListActivityold extends FragmentActivity
+        implements URLListFragment.Callbacks, PullToRefreshAttacher.OnRefreshListener {
+
+    /**
+     * Whether or not the activity is in two-pane mode, i.e. running on a tablet
+     * device.
+     */
+    private boolean mTwoPane;
     private static final int AUTHORIZATION_CODE = 1993;
     private static final int ACCOUNT_CODE = 1601;
     private AuthPreferences authPreferences;
@@ -86,42 +83,35 @@ public class URLListActivity extends ListActivity
     private boolean loggedIn = false;
     private int APIVersion;
     private Menu optionsMenu;
-    ArrayAdapter<String> stringAdapter;
-    private static ArrayList<String> ITEMS = new ArrayList<String>();
-    static {
-        ITEMS.add("http://goo.gl/SYFV4");
-        ITEMS.add("http://goo.gl/4DR2e");
-        ITEMS.add("http://goo.gl/0XsgU");
-    }
-
+    private URLListFragment listFragment;
+    private Activity thisActivity = this;
     private PullToRefreshAttacher mPullToRefreshAttacher;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_url_list_frag);
+        listFragment = ((URLListFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.url_list));
 
-        /**
-         * Get ListView and give it an adapter to display the sample items
-         */
-        ListView listView = getListView();
-        stringAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
-                ITEMS);
-        listView.setAdapter(stringAdapter);
+        if (findViewById(R.id.url_detail_container) != null) {
+            // The detail container view will be present only in the
+            // large-screen layouts (res/values-large and
+            // res/values-sw600dp). If this view is present, then the
+            // activity should be in two-pane mode.
+            mTwoPane = true;
 
-        /**
-         * Here we create a PullToRefreshAttacher manually without an Options instance.
-         * PullToRefreshAttacher will manually create one using default values.
-         */
-        mPullToRefreshAttacher = PullToRefreshAttacher.get(this);
-
-        // Set the Refreshable View to be the ListView and the refresh listener to be this.
-        mPullToRefreshAttacher.addRefreshableView(listView, this);
-
-        DefaultHeaderTransformer ht = (DefaultHeaderTransformer) mPullToRefreshAttacher.getHeaderTransformer();
-        ht.setPullText("Swipe down to refresh");
-        ht.setRefreshingText("Refreshing");
+            // In two-pane mode, list items should be given the
+            // 'activated' state when touched.
+            ((URLListFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.url_list))
+                    .setActivateOnItemClick(true);
+        }
 
         APIVersion = Build.VERSION.SDK_INT;
+        View scrollableView = findViewById(R.layout.activity_url_list);
+        mPullToRefreshAttacher = PullToRefreshAttacher.get(this);
+        mPullToRefreshAttacher.addRefreshableView(scrollableView, this);
 
         accountManager = AccountManager.get(this);
         authPreferences = new AuthPreferences(this);
@@ -133,34 +123,20 @@ public class URLListActivity extends ListActivity
         } else {
             // No account, refresh only anonymous ones and leave button alone
         }
-    }
 
-    @Override
-    public void onRefreshStarted(View view) {
-        if (!checkNetwork()) {
-            mPullToRefreshAttacher.setRefreshComplete();
-            return;
-        }
-
-        if (!loggedIn) {
-            Toast.makeText(this, "Please log in first", Toast.LENGTH_LONG).show();
-            mPullToRefreshAttacher.setRefreshComplete();
-            return;
-        }
-
-        String authToken = authPreferences.getToken();
-        new RefreshListTask().execute(authToken);
+        // TODO: If exposing deep links into your app, handle intents here.
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.shorten_new_URL:
-                newURLDialog();
+//                newURLDialog();
+                Intent intent = new Intent(this, URLListActivity.class);
+                startActivity(intent);
                 return true;
             case R.id.refresh_url_list:
-                mPullToRefreshAttacher.setRefreshing(true);
-                onRefreshStarted(getListView());
+                refreshList();
                 return true;
             case R.id.login:
                 accountSetup();
@@ -179,10 +155,10 @@ public class URLListActivity extends ListActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
         this.optionsMenu = menu;
-        getMenuInflater().inflate(R.menu.urllist_menu, menu);
+		getMenuInflater().inflate(R.menu.urllist_menu, menu);
 
         if (loggedIn) {
             menu.findItem(R.id.login).setVisible(false);
@@ -192,8 +168,8 @@ public class URLListActivity extends ListActivity
             menu.findItem(R.id.logout).setVisible(false);
         }
 
-        return super.onCreateOptionsMenu(menu);
-    }
+		return super.onCreateOptionsMenu(menu);
+	}
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
@@ -207,8 +183,55 @@ public class URLListActivity extends ListActivity
         return super.onPrepareOptionsMenu(menu);
     }
 
-    public void accountSetup() {
-        Intent intent = AccountManager.newChooseAccountIntent(null, null, new String[] {"com.google"}, false, null, null, null, null);
+    /**
+     * Callback method from {@link URLListFragment.Callbacks}
+     * indicating that the item with the given ID was selected.
+     */
+    @Override
+    public void onItemSelected(String id) {
+        if (mTwoPane) {
+            // In two-pane mode, show the detail view in this activity by
+            // adding or replacing the detail fragment using a
+            // fragment transaction.
+            Bundle arguments = new Bundle();
+//            arguments.putString(URLDetailFragment.ARG_ITEM_ID, id);
+            arguments.putString(URLDetailFragment.ARG_URL_STRING, id);
+            URLDetailFragment fragment = new URLDetailFragment();
+            fragment.setArguments(arguments);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.url_detail_container, fragment)
+                    .commit();
+
+        } else {
+            // In single-pane mode, simply start the detail activity
+            // for the selected item ID.
+            if (!checkNetwork()) {
+                return;
+            }
+            Intent detailIntent = new Intent(this, URLDetailActivity.class);
+//            detailIntent.putExtra(URLDetailFragment.ARG_ITEM_ID, id);
+            detailIntent.putExtra(URLDetailFragment.ARG_URL_STRING, id);
+            startActivity(detailIntent);
+        }
+    }
+
+    @Override
+    public void onRefreshStarted(View view) {
+        if (!checkNetwork()) {
+            return;
+        }
+
+        if (!loggedIn) {
+            Toast.makeText(this, "Please log in first", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        String authToken = authPreferences.getToken();
+        new RefreshListTask(this).execute(authToken);
+    }
+
+	public void accountSetup() {
+		Intent intent = AccountManager.newChooseAccountIntent(null, null, new String[] {"com.google"}, false, null, null, null, null);
         startActivityForResult(intent, ACCOUNT_CODE);
     }
 
@@ -218,6 +241,7 @@ public class URLListActivity extends ListActivity
         for (Account account : accountManager.getAccountsByType("com.google")) {
             if (account.name.equals(user)) {
                 userAccount = account;
+
                 break;
             }
         }
@@ -242,6 +266,7 @@ public class URLListActivity extends ListActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
         if (resultCode == RESULT_OK) {
             if (requestCode == AUTHORIZATION_CODE) {
                 requestToken(false);
@@ -281,24 +306,49 @@ public class URLListActivity extends ListActivity
 
                     authPreferences.setToken(token);
                     if (!passive) {
-                        Intent intent = new Intent(URLListActivity.this, URLListActivity.class);
+                        Intent intent = new Intent(URLListActivityold.this, URLListActivityold.class);
                         startActivity(intent);
                         finish();
                     }
+
+                    // Do stuff with token
                 }
             } catch (Exception e) {
                 Log.e("OnTokenAcquired run", "Failed to acquire token");
+//                throw new RuntimeException(e);
             }
         }
     }
 
     private void logout() {
         invalidateToken();
+//        AccountManager accountManager = AccountManager.get(this);
+//        accountManager.invalidateAuthToken("com.google",
+//                authPreferences.getToken());
+
         authPreferences.logout();
         loggedIn = false;
-        Intent intent = new Intent(URLListActivity.this, URLListActivityold.class);
+        Intent intent = new Intent(URLListActivityold.this, URLListActivityold.class);
         startActivity(intent);
         finish();
+    }
+
+    private void refreshList() {
+        if (!checkNetwork()) {
+            return;
+        }
+
+        if (!loggedIn) {
+            Toast.makeText(this, "Please log in first", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        JSONObject result;
+        String resultURL = null;
+        String longUrl = null;
+        String created = null;
+        String authToken = authPreferences.getToken();
+        new RefreshListTask(this).execute(authToken);
     }
 
     public void refreshCallback(JSONObject result) {
@@ -318,16 +368,28 @@ public class URLListActivity extends ListActivity
             JSONObject tmpobj = array.getJSONObject(0);
             Log.d("object", tmpobj.getString("id"));
             for (int i = 0; i < 30; ++i) {
-                ITEMS.add(array.getJSONObject(i).getString("id"));
+                list.add(array.getJSONObject(i).getString("id"));
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        stringAdapter.notifyDataSetChanged();
-
-
+        listFragment.addList(list);
         mPullToRefreshAttacher.setRefreshComplete();
+    }
+
+    private void setRefreshActionButtonState(final boolean refreshing) {
+        if (optionsMenu != null) {
+            final MenuItem refreshItem = optionsMenu
+                    .findItem(R.id.refresh_metrics);
+            if (refreshItem != null) {
+                if (refreshing) {
+                    refreshItem.setActionView(R.layout.actionbar_indeterminate_progress);
+                } else {
+                    refreshItem.setActionView(null);
+                }
+            }
+        }
     }
 
     private void newURLDialog() {
@@ -347,10 +409,12 @@ public class URLListActivity extends ListActivity
                 // Make sure it's not empty
                 if (urlToShare == null || urlToShare.matches("")) {
                     Toast.makeText(getBaseContext(), "Please enter a URL!", Toast.LENGTH_LONG).show();
-                } else if (!Patterns.WEB_URL.matcher(urlToShare).matches()) {
+                }
+                else if (!Patterns.WEB_URL.matcher(urlToShare).matches()) {
                     // Validate URL pattern
                     Toast.makeText(getBaseContext(), "Please enter a valid URL!", Toast.LENGTH_LONG).show();
-                } else {
+                }
+                else {
                     hideKeyboard(input);
                     // Let's go get that URL!
                     // Trim any trailing spaces (sometimes keyboards will autocorrect .com with a space at the end)
@@ -430,7 +494,7 @@ public class URLListActivity extends ListActivity
                     public void onClick(DialogInterface dialog, int which) {
                         shareURL(resultURL);
                     }
-                });
+        });
 
         alert.setNegativeButton("Copy", new DialogInterface.OnClickListener() {
             @Override
@@ -443,9 +507,7 @@ public class URLListActivity extends ListActivity
             alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 @Override
                 public void onDismiss(DialogInterface dialog) {
-                    if (!loggedIn) {
-                        stringAdapter.add(resultURL.substring(7));
-                    }
+                    listFragment.addURL(resultURL.substring(7));
                 }
             });
         }
@@ -514,9 +576,15 @@ public class URLListActivity extends ListActivity
     }
 
     private class RefreshListTask extends AsyncTask<String, Void, JSONObject> {
+        private URLListActivityold parentActivity;
         private ProgressDialog progressDialog;
         private String GETURL = "https://www.googleapis.com/urlshortener/v1/url/history";
         private final String LOGTAG = "RefreshHistory";
+
+        public RefreshListTask(URLListActivityold activity) {
+            parentActivity = activity;
+//            progressDialog = new ProgressDialog(parentActivity);
+        }
 
         @Override
         protected void onPreExecute() {
@@ -529,7 +597,7 @@ public class URLListActivity extends ListActivity
             String authToken;
 
             if (!checkNetwork()) {
-//                Toast.makeText(getParent(), "Not connected to the internet", Toast.LENGTH_LONG).show();
+                Toast.makeText(parentActivity, "Not connected to the internet", Toast.LENGTH_LONG).show();
                 Log.e(LOGTAG, "No connection");
                 return null;
             }

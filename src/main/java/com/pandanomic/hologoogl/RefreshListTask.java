@@ -24,12 +24,12 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 
 public class RefreshListTask extends AsyncTask<String, Void, JSONObject> {
-    private URLListActivity parentActivity;
+    private URLListActivityold parentActivity;
     private ProgressDialog progressDialog;
     private String GETURL = "https://www.googleapis.com/urlshortener/v1/url/history";
     private final String LOGTAG = "RefreshHistory";
 
-    public RefreshListTask(URLListActivity activity) {
+    public RefreshListTask(URLListActivityold activity) {
         parentActivity = activity;
         progressDialog = new ProgressDialog(parentActivity);
     }

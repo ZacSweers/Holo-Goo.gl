@@ -18,11 +18,12 @@ android {
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 16
+        targetSdkVersion 18
     }
 }
 
 dependencies {
     compile 'com.android.support:support-v4:13.0.+'
     compile files('libs/ActiveAndroid')
+    compile 'com.github.chrisbanes.actionbarpulltorefresh:library:0.7.+'
 }
