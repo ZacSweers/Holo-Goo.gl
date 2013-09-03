@@ -18,7 +18,7 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * A fragment representing a single URL detail screen.
- * This fragment is either contained in a {@link URLListActivityold}
+ * This fragment is either contained in a {@link URLListActivity}
  * in two-pane mode (on tablets) or a {@link URLDetailActivity}
  * on handsets.
  */

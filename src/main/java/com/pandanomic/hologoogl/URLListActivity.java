@@ -136,6 +136,14 @@ public class URLListActivity extends ListActivity
     }
 
     @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        // Do something when a list item is clicked
+        Log.i("mainTag", ITEMS.get(position));
+        refreshMetrics task = new refreshMetrics();
+        task.execute(ITEMS.get(position));
+    }
+
+    @Override
     public void onRefreshStarted(View view) {
         if (!checkNetwork()) {
             mPullToRefreshAttacher.setRefreshComplete();
@@ -296,7 +304,7 @@ public class URLListActivity extends ListActivity
         invalidateToken();
         authPreferences.logout();
         loggedIn = false;
-        Intent intent = new Intent(URLListActivity.this, URLListActivityold.class);
+        Intent intent = new Intent(URLListActivity.this, URLListActivity.class);
         startActivity(intent);
         finish();
     }
@@ -306,8 +314,6 @@ public class URLListActivity extends ListActivity
             Toast.makeText(this, "Error retrieving data", Toast.LENGTH_LONG).show();
             return;
         }
-
-        ArrayList<String> list = new ArrayList<String>();
 
         try {
             int totalItems = result.getInt("totalItems");
@@ -405,19 +411,9 @@ public class URLListActivity extends ListActivity
             return;
         }
 
-//        ProgressDialog dialog = new ProgressDialog(this);
-//        dialog.setTitle("Shortening...");
-//        dialog.setMessage("Please wait.");
-//        dialog.setIndeterminate(true);
-//        dialog.setCancelable(false);
-//        dialog.show();
-
         URLShortener shortener = new URLShortener(authPreferences.getToken());
         Log.d("hologoogl", "generating");
         final String resultURL = shortener.generate(input);
-//        if (dialog != null) {
-//            dialog.dismiss();
-//        }
         Log.d("hologoogl", "done generating");
 
         Log.d("hologoogl", "Generated " + resultURL);
@@ -499,8 +495,7 @@ public class URLListActivity extends ListActivity
         if (APIVersion >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             return Settings.System.getInt(getBaseContext().getContentResolver(),
                     Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
-        }
-        else {
+        } else {
             return Settings.System.getInt(getBaseContext().getContentResolver(),
                     Settings.System.AIRPLANE_MODE_ON, 0) != 0;
         }
@@ -514,13 +509,11 @@ public class URLListActivity extends ListActivity
     }
 
     private class RefreshListTask extends AsyncTask<String, Void, JSONObject> {
-        private ProgressDialog progressDialog;
         private String GETURL = "https://www.googleapis.com/urlshortener/v1/url/history";
         private final String LOGTAG = "RefreshHistory";
 
         @Override
         protected void onPreExecute() {
-//            this.progressDialog.setMessage("Retrieving History");
 //            this.progressDialog.show();
         }
 
@@ -529,7 +522,7 @@ public class URLListActivity extends ListActivity
             String authToken;
 
             if (!checkNetwork()) {
-//                Toast.makeText(getParent(), "Not connected to the internet", Toast.LENGTH_LONG).show();
+                Toast.makeText(getParent(), "Not connected to the internet", Toast.LENGTH_LONG).show();
                 Log.e(LOGTAG, "No connection");
                 return null;
             }
@@ -590,11 +583,99 @@ public class URLListActivity extends ListActivity
          * @param result JSONObject result received from Goo.gl
          */
         protected void onPostExecute(JSONObject result) {
-//            if (progressDialog.isShowing()) {
-//                progressDialog.dismiss();
-//            }
-
             refreshCallback(result);
+        }
+    }
+
+    private void metricsDialog(URLMetrics metrics) {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("Analytics")
+                .setCancelable(true)
+                .setNeutralButton("Done", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                })
+                .setMessage("Short URL: " + metrics.getShortURL() + "\nLong URL: " +
+                        metrics.getLongURL() + "\nClicks: " + metrics.getClicks());
+
+        alert.show();
+    }
+
+    private class refreshMetrics extends AsyncTask<String, Void, URLMetrics> {
+        private final String LOGTAG = "RefreshHistory";
+        private String GETURL = "https://www.googleapis.com/urlshortener/v1/url";
+        @Override
+        protected void onPreExecute() {
+            mPullToRefreshAttacher.setRefreshing(true);
+            DefaultHeaderTransformer ht = (DefaultHeaderTransformer) mPullToRefreshAttacher.getHeaderTransformer();
+            ht.setRefreshingText("Retrieving analytics");
+        }
+
+        @Override
+        protected URLMetrics doInBackground(String... params) {
+            String shortenedURL = params[0];
+            GETURL += "?shortUrl=" + shortenedURL;
+            GETURL += "&projection=FULL";
+
+            JSONObject results;
+
+            Log.d("googl", "Fetching data");
+            try {
+                HttpParams httpParams = new BasicHttpParams();
+                HttpConnectionParams.setConnectionTimeout(httpParams, 5000);
+                HttpConnectionParams.setSoTimeout(httpParams, 5000);
+
+                DefaultHttpClient client = new DefaultHttpClient(httpParams);
+                HttpGet get = new HttpGet(GETURL);
+
+                HttpResponse response = client.execute(get);
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+                StringBuilder builder = new StringBuilder();
+                for (String line; (line = reader.readLine()) != null;) {
+                    builder.append(line).append("\n");
+                }
+
+                results = new JSONObject(new JSONTokener(builder.toString()));
+                Log.d("hologoogl", results.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+                String errorMessage = "Error: ";
+                if (e instanceof UnsupportedEncodingException) {
+                    errorMessage += "Encoding exception";
+                } else if (e instanceof ClientProtocolException) {
+                    errorMessage += "POST exception";
+                } else if (e instanceof IOException) {
+                    errorMessage += "IO Exception in parsing response";
+                } else {
+                    errorMessage += "JSON parsing exception";
+                }
+
+                Log.e("googl:retrieveURLTask", errorMessage);
+                return null;
+            }
+
+            URLMetrics metrics = new URLMetrics(shortenedURL);
+            try {
+                metrics.setLongURL(results.getString("longUrl"));
+                JSONObject analytics = results.getJSONObject("analytics");
+                JSONObject allTime = analytics.getJSONObject("allTime");
+                metrics.setClicks(allTime.getInt("shortUrlClicks"));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return metrics;
+        }
+
+        /**
+         * Post-execution stuff
+         * @param result JSONObject result received from Goo.gl
+         */
+        protected void onPostExecute(URLMetrics result) {
+            mPullToRefreshAttacher.setRefreshComplete();
+            metricsDialog(result);
         }
     }
 }
