@@ -21,6 +21,8 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.ClipData;
@@ -600,6 +602,8 @@ public class URLListActivity extends ListActivity
                         metrics.getLongURL() + "\nClicks: " + metrics.getClicks());
 
         alert.show();
+//        MetricsDialogFragment dialog = new MetricsDialogFragment();
+//        dialog.show(getFragmentManager().beginTransaction(), "changelogdemo");
     }
 
     private class refreshMetrics extends AsyncTask<String, Void, URLMetrics> {
