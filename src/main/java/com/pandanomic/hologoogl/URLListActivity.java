@@ -622,7 +622,18 @@ public class URLListActivity extends ListActivity
                 })
                 .setMessage(Html.fromHtml("<b><u> Short URL </u></b><br>" + metrics.getShortURL()
                                 + "<br><br><b><u>Long URL </u></b><br>" + metrics.getLongURL()
-                                + "<br><br><b><u>Clicks </u></b><br>" + metrics.getClicks()));
+                                + "<br><br><b><u>Clicks </u></b><br>" + metrics.getClicks()))
+                .setNegativeButton("Details", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(getBaseContext(), "Coming soon", Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setPositiveButton("Share", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
 
         alert.show();
 //        MetricsDialogFragment dialog = new MetricsDialogFragment();
