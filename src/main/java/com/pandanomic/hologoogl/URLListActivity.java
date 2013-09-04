@@ -299,6 +299,8 @@ public class URLListActivity extends ListActivity
         invalidateToken();
         authPreferences.logout();
         loggedIn = false;
+        stringAdapter.clear();
+        stringAdapter.notifyDataSetChanged();
         Intent intent = new Intent(URLListActivity.this, URLListActivity.class);
         startActivity(intent);
         finish();
