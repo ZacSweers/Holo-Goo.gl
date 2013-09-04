@@ -19,10 +19,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.ClipData;
@@ -37,7 +34,6 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.provider.SyncStateContract;
 import android.text.Html;
 import android.text.InputType;
 import android.util.Log;
@@ -48,13 +44,14 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
@@ -330,8 +327,6 @@ public class URLListActivity extends ListActivity
         }
 
         stringAdapter.notifyDataSetChanged();
-
-
         mPullToRefreshAttacher.setRefreshComplete();
     }
 
@@ -351,10 +346,10 @@ public class URLListActivity extends ListActivity
 
                 // Make sure it's not empty
                 if (urlToShare == null || urlToShare.matches("")) {
-                    Toast.makeText(getBaseContext(), "Please enter a URL!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getBaseContext(), "No URL Entered", Toast.LENGTH_LONG).show();
                 } else if (!Patterns.WEB_URL.matcher(urlToShare).matches()) {
                     // Validate URL pattern
-                    Toast.makeText(getBaseContext(), "Please enter a valid URL!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getBaseContext(), "Invalid URL", Toast.LENGTH_LONG).show();
                 } else {
                     hideKeyboard(input);
                     // Let's go get that URL!
@@ -409,13 +404,26 @@ public class URLListActivity extends ListActivity
         if (!checkNetwork()) {
             return;
         }
+        ShortenURLTask shortenURLTask;
 
-        URLShortener shortener = new URLShortener(authPreferences.getToken());
-        Log.d("hologoogl", "generating");
-        final String resultURL = shortener.generate(input);
+        if (loggedIn) {
+            shortenURLTask = new ShortenURLTask(authPreferences.getToken());
+        } else {
+            shortenURLTask = new ShortenURLTask();
+        }
+
+        shortenURLTask.execute(input);
+    }
+
+    private void displayShortenedURL(final String resultURL) {
         Log.d("hologoogl", "done generating");
 
         Log.d("hologoogl", "Generated " + resultURL);
+
+        if (resultURL.equals("none")) {
+            Toast.makeText(this, "Parse error", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setTitle(resultURL)
@@ -445,7 +453,6 @@ public class URLListActivity extends ListActivity
             });
         }
         alert.show();
-
     }
 
     private void copyURL(String input) {
@@ -609,9 +616,9 @@ public class URLListActivity extends ListActivity
         private String GETURL = "https://www.googleapis.com/urlshortener/v1/url";
         @Override
         protected void onPreExecute() {
-            mPullToRefreshAttacher.setRefreshing(true);
             DefaultHeaderTransformer ht = (DefaultHeaderTransformer) mPullToRefreshAttacher.getHeaderTransformer();
             ht.setRefreshingText("Retrieving analytics");
+            mPullToRefreshAttacher.setRefreshing(true);
         }
 
         @Override
@@ -678,6 +685,90 @@ public class URLListActivity extends ListActivity
         protected void onPostExecute(URLMetrics result) {
             mPullToRefreshAttacher.setRefreshComplete();
             metricsDialog(result);
+        }
+    }
+
+    private class ShortenURLTask extends AsyncTask<String, Void, JSONObject> {
+
+        private String token;
+
+        public ShortenURLTask() {
+
+        }
+
+        public ShortenURLTask(String authToken) {
+            this.token = authToken;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            DefaultHeaderTransformer ht = (DefaultHeaderTransformer) mPullToRefreshAttacher.getHeaderTransformer();
+            ht.setRefreshingText("Shortening URL...");
+            mPullToRefreshAttacher.setRefreshing(true);
+        }
+
+        @Override
+        protected JSONObject doInBackground(String... params) {
+            String sharedURL = params[0];
+
+            JSONObject results;
+
+            Log.d("googl", "Fetching data");
+            try {
+                HttpParams httpParams = new BasicHttpParams();
+                HttpConnectionParams.setConnectionTimeout(httpParams, 5000);
+                HttpConnectionParams.setSoTimeout(httpParams, 5000);
+
+                DefaultHttpClient client = new DefaultHttpClient(httpParams);
+                HttpPost post = new HttpPost("https://www.googleapis.com/urlshortener/v1/url");
+                post.setEntity(new StringEntity("{\"longUrl\": \"" + sharedURL + "\"}"));
+                post.setHeader("Content-Type", "application/json");
+                if (token != null) {
+                    post.setHeader("Authorization", "Bearer " + token);
+                }
+
+                HttpResponse response = client.execute(post);
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+                StringBuilder builder = new StringBuilder();
+                for (String line; (line = reader.readLine()) != null;) {
+                    builder.append(line).append("\n");
+                }
+
+                results = new JSONObject(new JSONTokener(builder.toString()));
+            } catch (Exception e) {
+                e.printStackTrace();
+                String errorMessage = "Error: ";
+                if (e instanceof UnsupportedEncodingException) {
+                    errorMessage += "Encoding exception";
+                } else if (e instanceof ClientProtocolException) {
+                    errorMessage += "POST exception";
+                } else if (e instanceof IOException) {
+                    errorMessage += "IO Exception in parsing response";
+                } else {
+                    errorMessage += "JSON parsing exception";
+                }
+
+                Log.e("ShortenURLTask", errorMessage);
+                return null;
+            }
+            return results;
+        }
+
+        /**
+         * Post-execution stuff
+         * @param result JSONObject result received from Goo.gl
+         */
+        protected void onPostExecute(JSONObject result) {
+            String shortenedURL = "none";
+
+            try {
+                shortenedURL = result.getString("id");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            mPullToRefreshAttacher.setRefreshComplete();
+            displayShortenedURL(shortenedURL);
         }
     }
 }

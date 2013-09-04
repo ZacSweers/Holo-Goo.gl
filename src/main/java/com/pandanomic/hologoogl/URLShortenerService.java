@@ -2,6 +2,7 @@ package com.pandanomic.hologoogl;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
@@ -9,14 +10,38 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.AsyncTask;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 import android.util.Patterns;
 import android.widget.Toast;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+
+import uk.co.senab.actionbarpulltorefresh.library.DefaultHeaderTransformer;
 
 public class URLShortenerService  extends Service {
 
     private Intent originalIntent;
+    private NotificationManager mNotifyMgr;
+    private NotificationCompat.Builder mBuilder;
+    private final int mNotificationId = 001;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int stardId) {
@@ -29,35 +54,35 @@ public class URLShortenerService  extends Service {
             stopService(originalIntent);
         }
 
-        URLShortener shortener = new URLShortener();
-        String shortenedURL = shortener.generate(sharedURL);
+        mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        mBuilder = new NotificationCompat.Builder(this);
 
-        if (shortenedURL != null) {
-            handleNotification(shortenedURL, intent);
+        mBuilder.setSmallIcon(R.drawable.ic_launcher)
+                        .setContentTitle("Shortening URL...")
+                        .setProgress(0, 0, true);
+
+        mNotifyMgr.notify(mNotificationId, mBuilder.build());
+
+        ShortenURLTask shortenURLTask;
+
+        AuthPreferences authPreferences = new AuthPreferences(this);
+
+        if (authPreferences.loggedIn()) {
+            shortenURLTask = new ShortenURLTask(authPreferences.getToken());
+        } else {
+            shortenURLTask = new ShortenURLTask();
         }
 
+        shortenURLTask.execute(sharedURL);
         return Service.START_NOT_STICKY;
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-
         return null;
     }
 
-    private void handleNotification(String shortenedURL, Intent intent) {
-        final NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.ic_launcher)
-                        .setContentTitle("Shortening URL...")
-                        .setProgress(0, 0, true);
-
-        final int mNotificationId = 001;
-        final NotificationManager mNotifyMgr =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-        mNotifyMgr.notify(mNotificationId, mBuilder.build());
-
+    private void handleNotification(String shortenedURL) {
         final String finalResultURL = shortenedURL;
         BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
 
@@ -110,5 +135,85 @@ public class URLShortenerService  extends Service {
         intent.putExtra(Intent.EXTRA_SUBJECT, "Shared from Holo Goo.gl");
         getBaseContext().startActivity(intent);
         stopService(originalIntent);
+    }
+
+    private class ShortenURLTask extends AsyncTask<String, Void, JSONObject> {
+
+        private String token;
+
+        public ShortenURLTask() {
+
+        }
+
+        public ShortenURLTask(String authToken) {
+            this.token = authToken;
+        }
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected JSONObject doInBackground(String... params) {
+            String sharedURL = params[0];
+
+            JSONObject results;
+
+            Log.d("googl", "Fetching data");
+            try {
+                HttpParams httpParams = new BasicHttpParams();
+                HttpConnectionParams.setConnectionTimeout(httpParams, 5000);
+                HttpConnectionParams.setSoTimeout(httpParams, 5000);
+
+                DefaultHttpClient client = new DefaultHttpClient(httpParams);
+                HttpPost post = new HttpPost("https://www.googleapis.com/urlshortener/v1/url");
+                post.setEntity(new StringEntity("{\"longUrl\": \"" + sharedURL + "\"}"));
+                post.setHeader("Content-Type", "application/json");
+                if (token != null) {
+                    post.setHeader("Authorization", "Bearer " + token);
+                }
+
+                HttpResponse response = client.execute(post);
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+                StringBuilder builder = new StringBuilder();
+                for (String line; (line = reader.readLine()) != null;) {
+                    builder.append(line).append("\n");
+                }
+
+                results = new JSONObject(new JSONTokener(builder.toString()));
+            } catch (Exception e) {
+                e.printStackTrace();
+                String errorMessage = "Error: ";
+                if (e instanceof UnsupportedEncodingException) {
+                    errorMessage += "Encoding exception";
+                } else if (e instanceof ClientProtocolException) {
+                    errorMessage += "POST exception";
+                } else if (e instanceof IOException) {
+                    errorMessage += "IO Exception in parsing response";
+                } else {
+                    errorMessage += "JSON parsing exception";
+                }
+
+                Log.e("ShortenURLTask", errorMessage);
+                return null;
+            }
+            return results;
+        }
+
+        /**
+         * Post-execution stuff
+         * @param result JSONObject result received from Goo.gl
+         */
+        protected void onPostExecute(JSONObject result) {
+            String shortenedURL = "none";
+
+            try {
+                shortenedURL = result.getString("id");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            handleNotification(shortenedURL);
+        }
     }
 }

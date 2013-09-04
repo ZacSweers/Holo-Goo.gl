@@ -21,20 +21,10 @@ public class URLShareController extends Activity {
 
 		if (Intent.ACTION_SEND.equals(action) && "text/plain".equals(type)) {
             String sharedURL = intent.getStringExtra(Intent.EXTRA_TEXT);
-
-            ConnectivityManager connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-            if (!(networkInfo != null && networkInfo.isConnected())) {
-                Toast.makeText(this, "Check your internet connection", Toast.LENGTH_LONG).show();
-                return;
-            }
-
             Intent i = new Intent(this, URLShortenerService.class);
             i.putExtra("URL", sharedURL);
             startService(i);
             Toast.makeText(this, "Generating URL, check notification bar", Toast.LENGTH_LONG).show();
-            Object service = getSystemService("statusbar");
-
             // TODO: Expand notifications panel
 
             finish();

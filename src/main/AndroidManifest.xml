@@ -21,14 +21,6 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.pandanomic.hologoogl.URLDetailActivity"
-            android:label="@string/title_url_detail"
-            android:parentActivityName=".URLListActivity" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".URLListActivity" />
-        </activity>
-        <activity
             android:name="com.pandanomic.hologoogl.URLShareController"
             android:label="@string/app_name" >
             <intent-filter>
@@ -38,10 +30,6 @@
 
                 <data android:mimeType="text/plain" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name="com.pandanomic.hologoogl.ShortenURLResult"
-            android:label="@string/app_name" >
         </activity>
         <activity
                 android:name="com.pandanomic.hologoogl.URLListActivity"
