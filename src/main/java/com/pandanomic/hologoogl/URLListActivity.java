@@ -78,6 +78,7 @@ public class URLListActivity extends ListActivity
     private AuthPreferences authPreferences;
     private AccountManager accountManager;
     private final String SCOPE = "https://www.googleapis.com/auth/urlshortener";
+    private String LOGTAG = "Main Activity";
     private boolean loggedIn = false;
     private int APIVersion;
     private Menu optionsMenu;
@@ -180,6 +181,18 @@ public class URLListActivity extends ListActivity
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.v(LOGTAG, "Resumed");
+//        reauthorizeGoogle();
+//        if (loggedIn) {
+//            mPullToRefreshAttacher.setRefreshing(true);
+//            onRefreshStarted(getListView());
+//        }
+        // TODO: This for whatever reason gets an invalid credentials error from google
     }
 
     @Override
@@ -307,10 +320,13 @@ public class URLListActivity extends ListActivity
     }
 
     public void refreshCallback(JSONObject result) {
+        Log.v(LOGTAG, "Finished refresh, parsing result");
         if (result == null) {
             Toast.makeText(this, "Error retrieving data", Toast.LENGTH_LONG).show();
             return;
         }
+
+        Log.v("JSON RESULT", result.toString());
 
         try {
             int totalItems = result.getInt("totalItems");
