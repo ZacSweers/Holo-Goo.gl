@@ -18,5 +18,11 @@
     <string name="send_feedback">Send Feedback</string>
     <string name="logout">Logout</string>
     <string name="crash_toast_text">App crashed, compiling report</string>
+    <string name="crash_dialog_text">Would you like to send a crash report? It really helps me make
+        the app better!
+    </string>
+    <string name="crash_dialog_title">Oh no!</string>
+    <string name="crash_dialog_ok_toast">Thanks!</string>
+    <string name="crash_dialog_comment_prompt">Add any comments here (what you were doing, etc)</string>
 
 </resources>

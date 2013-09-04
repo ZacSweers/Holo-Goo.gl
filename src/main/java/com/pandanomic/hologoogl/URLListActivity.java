@@ -73,15 +73,6 @@ import java.util.ArrayList;
 import uk.co.senab.actionbarpulltorefresh.library.DefaultHeaderTransformer;
 import uk.co.senab.actionbarpulltorefresh.library.PullToRefreshAttacher;
 
-import org.acra.*;
-import org.acra.annotation.*;
-
-@ReportsCrashes(
-        formKey = "", // This is required for backward compatibility but not used
-        mailTo = "pandanomic@gmail.com",
-        mode = ReportingInteractionMode.TOAST,
-        resToastText = R.string.crash_toast_text
-)
 public class URLListActivity extends ListActivity
         implements PullToRefreshAttacher.OnRefreshListener {
 
@@ -106,8 +97,6 @@ public class URLListActivity extends ListActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        ACRA.init(getApplication());
 
         /**
          * Get ListView and give it an adapter to display the sample items
