@@ -17,6 +17,7 @@
     <string name="URLShortenerService">URL Shortener Service</string>
     <string name="send_feedback">Send Feedback</string>
     <string name="logout">Logout</string>
+    <string name="hint_weburl">Type or paste a URL here</string>
     <string name="crash_toast_text">App crashed, compiling report</string>
     <string name="crash_dialog_text">Would you like to send a crash report? It really helps me make
         the app better!

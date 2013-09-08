@@ -19,9 +19,9 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.ListActivity;
-import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -35,17 +35,23 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.Html;
-import android.text.InputType;
+import android.text.format.Time;
 import android.util.Log;
 import android.util.Patterns;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.Toast;
+
+import com.andreabaccega.formedittextvalidator.WebUrlValidator;
+import com.andreabaccega.widget.FormEditText;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -66,6 +72,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import uk.co.senab.actionbarpulltorefresh.library.DefaultHeaderTransformer;
 import uk.co.senab.actionbarpulltorefresh.library.PullToRefreshAttacher;
@@ -82,12 +89,26 @@ public class URLListActivity extends ListActivity
     private boolean loggedIn = false;
     private int APIVersion;
     private Menu optionsMenu;
-    private ArrayAdapter<String> stringAdapter;
-    private static ArrayList<String> ITEMS = new ArrayList<String>();
+    private SimpleAdapter mAdapter;
+    private static ArrayList<HashMap<String, Object>> ITEMS = new ArrayList<HashMap<String, Object>>();
     static {
-        ITEMS.add("http://goo.gl/SYFV4");
-        ITEMS.add("http://goo.gl/4DR2e");
-        ITEMS.add("http://goo.gl/0XsgU");
+        HashMap<String, Object> map = new HashMap<String, Object>();
+        map.put("title", "http://goo.gl/SYFV4");
+        map.put("createddate", "9/12/13");
+        map.put("longurl", "www.somelongurl");
+        ITEMS.add(map);
+
+        HashMap<String, Object> map1 = new HashMap<String, Object>();
+        map1.put("title", "http://goo.gl/4DR2e");
+        map1.put("createddate", "9/13/13");
+        map1.put("longurl", "www.somelongurl");
+        ITEMS.add(map1);
+
+        HashMap<String, Object> map2 = new HashMap<String, Object>();
+        map2.put("title", "http://goo.gl/0XsgU");
+        map2.put("createddate", "8/12/12");
+        map2.put("longurl", "www.somelongurl");
+        ITEMS.add(map2);
     }
 
     private PullToRefreshAttacher mPullToRefreshAttacher;
@@ -96,13 +117,16 @@ public class URLListActivity extends ListActivity
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setContentView(R.layout.activity_url_list);
         /**
          * Get ListView and give it an adapter to display the sample items
          */
         ListView listView = getListView();
-        stringAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
-                ITEMS);
-        listView.setAdapter(stringAdapter);
+        String[] from = new String[] {"title", "longurl", "createddate"};
+        int[] to = new int[] { R.id.title, R.id.longurl, R.id.createddate};
+        mAdapter = new SimpleAdapter(this, ITEMS, R.layout.url_list_item,
+                from, to);
+        setListAdapter(mAdapter);
 
         /**
          * Here we create a PullToRefreshAttacher manually without an Options instance.
@@ -134,9 +158,11 @@ public class URLListActivity extends ListActivity
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         // Do something when a list item is clicked
-        Log.i("mainTag", ITEMS.get(position));
+        HashMap<String, Object> map = ITEMS.get(position);
+        String shortURL = (String) map.get("title");
+        Log.i("mainTag", shortURL);
         refreshMetrics task = new refreshMetrics();
-        task.execute(ITEMS.get(position));
+        task.execute(shortURL);
     }
 
     @Override
@@ -312,8 +338,8 @@ public class URLListActivity extends ListActivity
         invalidateToken();
         authPreferences.logout();
         loggedIn = false;
-        stringAdapter.clear();
-        stringAdapter.notifyDataSetChanged();
+        ITEMS.clear();
+        mAdapter.notifyDataSetChanged();
         Intent intent = new Intent(URLListActivity.this, URLListActivity.class);
         startActivity(intent);
         finish();
@@ -338,45 +364,47 @@ public class URLListActivity extends ListActivity
             Log.d("object", tmpobj.getString("id"));
             ITEMS.clear();
             for (int i = 0; i < 30; ++i) {
-                ITEMS.add(array.getJSONObject(i).getString("id"));
+                URLMetrics metrics = new URLMetrics(array.getJSONObject(i));
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("title", metrics.getShortURL());
+                map.put("longurl", metrics.getLongURL());
+                map.put("createddate", metrics.getDateCreated());
+                ITEMS.add(map);
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        stringAdapter.notifyDataSetChanged();
+        mAdapter.notifyDataSetChanged();
         mPullToRefreshAttacher.setRefreshComplete();
     }
 
+    @TargetApi(17)
     private void newURLDialog() {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setTitle("Shorten New URL");
         alert.setCancelable(true);
 
-        final EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
-        input.setHint("Type or paste a URL here");
-        alert.setView(input);
-        alert.setPositiveButton("Go", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String urlToShare = input.getText().toString();
+//        final EditText input = new EditText(this);
+//        input.setInputType(InputType.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT);
+//        input.setHint("Type or paste a URL here");
 
-                // Make sure it's not empty
-                if (urlToShare == null || urlToShare.matches("")) {
-                    Toast.makeText(getBaseContext(), "No URL Entered", Toast.LENGTH_LONG).show();
-                } else if (!Patterns.WEB_URL.matcher(urlToShare).matches()) {
-                    // Validate URL pattern
-                    Toast.makeText(getBaseContext(), "Invalid URL", Toast.LENGTH_LONG).show();
-                } else {
-                    hideKeyboard(input);
-                    // Let's go get that URL!
-                    // Trim any trailing spaces (sometimes keyboards will autocorrect .com with a space at the end)
-                    generateShortenedURL(urlToShare.trim());
-                }
-            }
-        });
+//        Dialog dialog = new Dialog(this);
+//        dialog.setContentView(R.layout.edittext_url);
 
+        LayoutInflater layoutInflater = LayoutInflater.from(this);
+        View dialog_layout = layoutInflater.inflate(R.layout.edittext_url, null);
+
+        final FormEditText input = (FormEditText) dialog_layout.findViewById(R.id.et_url);
+        input.addValidator(new WebUrlValidator("Not a valid URL"));
+
+        if (input == null) {
+            Log.e(LOGTAG, "input is null");
+            return;
+        }
+
+        alert.setView(dialog_layout);
+        alert.setPositiveButton("Shorten", null);
         alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -394,7 +422,41 @@ public class URLListActivity extends ListActivity
             });
         }
 
-        alert.show();
+        final AlertDialog dialog = alert.create();
+
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialogI) {
+
+                Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                assert positive != null;    // To get AS to stop bugging me about nullpointer checks
+                positive.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (input.testValidity()) {
+                            String urlToShare = input.getText().toString();
+
+                            // Make sure it's not empty
+                            if (urlToShare == null || urlToShare.matches("")) {
+                                Toast.makeText(getBaseContext(), "No URL Entered", Toast.LENGTH_LONG).show();
+                            } else if (!Patterns.WEB_URL.matcher(urlToShare).matches()) {
+                                // Validate URL pattern
+                                Toast.makeText(getBaseContext(), "Invalid URL", Toast.LENGTH_LONG).show();
+                            } else {
+                                hideKeyboard(input);
+                                // Let's go get that URL!
+                                // Trim any trailing spaces (sometimes keyboards will autocorrect .com with a space at the end)
+                                generateShortenedURL(urlToShare.trim());
+                                dialog.dismiss();
+                            }
+                        }
+                    }
+                });
+
+            }
+        });
+
+        dialog.show();
 
         // Show keyboard
         input.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -433,6 +495,7 @@ public class URLListActivity extends ListActivity
         shortenURLTask.execute(input);
     }
 
+    @TargetApi(17)
     private void displayShortenedURL(final String resultURL) {
         Log.d("hologoogl", "done generating");
 
@@ -460,12 +523,26 @@ public class URLListActivity extends ListActivity
             }
         });
 
+        alert.setNeutralButton("Details", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Toast.makeText(getBaseContext(), "TODO", Toast.LENGTH_LONG).show();
+            }
+        });
+
         if (APIVersion >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 @Override
                 public void onDismiss(DialogInterface dialog) {
                     if (!loggedIn) {
-                        stringAdapter.add(resultURL.substring(7));
+                        HashMap<String, Object> map = new HashMap<String, Object>();
+                        map.put("title", resultURL);
+                        Time now = new Time();
+                        now.setToNow();
+                        map.put("createddate", now.toString());
+                        map.put("longurl", "N/A");
+                        ITEMS.add(map);
+                        mAdapter.notifyDataSetChanged();
                     }
                 }
             });
@@ -694,17 +771,7 @@ public class URLListActivity extends ListActivity
                 return null;
             }
 
-            URLMetrics metrics = new URLMetrics(shortenedURL);
-            try {
-                metrics.setLongURL(results.getString("longUrl"));
-                JSONObject analytics = results.getJSONObject("analytics");
-                JSONObject allTime = analytics.getJSONObject("allTime");
-                metrics.setClicks(allTime.getInt("shortUrlClicks"));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            return metrics;
+            return new URLMetrics(results);
         }
 
         /**

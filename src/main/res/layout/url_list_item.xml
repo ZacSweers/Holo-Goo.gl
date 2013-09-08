@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="fill_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal"
+              android:background="@drawable/list_selector">
+
+    <TextView
+            android:id="@+id/createddate"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:textSize="12sp"
+            android:layout_weight="100"
+            android:textColor="@android:color/darker_gray"
+            android:text="9/12/13"
+            android:gravity="center_vertical|center_horizontal"/>
+
+    <View
+            android:layout_width="5dp"
+            android:layout_height="fill_parent"
+            android:background="@android:color/transparent"/>
+
+    <View
+            android:layout_width="1dp"
+            android:layout_height="fill_parent"
+            android:background="@android:color/darker_gray"/>
+
+    <View
+            android:layout_width="5dp"
+            android:layout_height="fill_parent"
+            android:background="@android:color/transparent"/>
+
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_gravity="left|center_vertical"
+            android:layout_weight="25">
+        <TextView
+                android:id="@+id/title"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:layout_weight="1"
+                android:gravity="center_vertical|center_horizontal"
+                android:text="SomeURL"/>
+
+        <View
+                android:layout_width="fill_parent"
+                android:layout_height="5dp"
+                android:background="@android:color/transparent"/>
+
+        <View
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"/>
+
+        <View
+                android:layout_width="fill_parent"
+                android:layout_height="5dp"
+                android:background="@android:color/transparent"/>
+
+        <TextView
+                android:id="@+id/longurl"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:layout_weight="1"
+                android:textColor="@color/holo_blue"
+                android:gravity="center_vertical|center_horizontal"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="SomeURL"/>
+    </LinearLayout>
+</LinearLayout>
