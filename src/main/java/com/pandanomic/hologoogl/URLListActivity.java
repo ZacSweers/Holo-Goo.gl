@@ -43,7 +43,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -87,10 +86,13 @@ public class URLListActivity extends ListActivity
     private final String SCOPE = "https://www.googleapis.com/auth/urlshortener";
     private String LOGTAG = "Main Activity";
     private boolean loggedIn = false;
-    private int APIVersion;
-    private Menu optionsMenu;
+    private final int APIVersion = Build.VERSION.SDK_INT;
+    private Menu mOptionsMenu;
     private SimpleAdapter mAdapter;
     private static ArrayList<HashMap<String, Object>> ITEMS = new ArrayList<HashMap<String, Object>>();
+    private PullToRefreshAttacher mPullToRefreshAttacher;
+    private boolean mRefreshing;
+
     static {
         HashMap<String, Object> map = new HashMap<String, Object>();
         map.put("title", "http://goo.gl/SYFV4");
@@ -111,7 +113,7 @@ public class URLListActivity extends ListActivity
         ITEMS.add(map2);
     }
 
-    private PullToRefreshAttacher mPullToRefreshAttacher;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -141,7 +143,7 @@ public class URLListActivity extends ListActivity
         ht.setPullText("Swipe down to refresh");
         ht.setRefreshingText("Refreshing");
 
-        APIVersion = Build.VERSION.SDK_INT;
+        mRefreshing = false;
 
         accountManager = AccountManager.get(this);
         authPreferences = new AuthPreferences(this);
@@ -158,28 +160,43 @@ public class URLListActivity extends ListActivity
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         // Do something when a list item is clicked
-        HashMap<String, Object> map = ITEMS.get(position);
-        String shortURL = (String) map.get("title");
-        Log.i("mainTag", shortURL);
-        refreshMetrics task = new refreshMetrics();
-        task.execute(shortURL);
+        if (!mRefreshing) {
+            HashMap<String, Object> map = ITEMS.get(position);
+            String shortURL = (String) map.get("title");
+            Log.i("itemClicked", Boolean.toString(mRefreshing));
+            refreshMetrics task = new refreshMetrics();
+            task.execute(shortURL);
+        }
     }
 
     @Override
     public void onRefreshStarted(View view) {
-        if (!checkNetwork()) {
-            mPullToRefreshAttacher.setRefreshComplete();
+        if (!checkNetwork() || mRefreshing) {
+            stopRefreshAnimation();
             return;
         }
 
         if (!loggedIn) {
             Toast.makeText(this, "Please log in first", Toast.LENGTH_LONG).show();
-            mPullToRefreshAttacher.setRefreshComplete();
+            stopRefreshAnimation();
             return;
         }
 
+        startRefreshAnimation("Refreshing...");
         String authToken = authPreferences.getToken();
         new RefreshListTask().execute(authToken);
+    }
+
+    public void startRefreshAnimation(String message) {
+        assert !mRefreshing;
+        mRefreshing = true;
+        ((DefaultHeaderTransformer) mPullToRefreshAttacher.getHeaderTransformer()).setRefreshingText(message);
+        mPullToRefreshAttacher.setRefreshing(true);
+    }
+
+    public void stopRefreshAnimation() {
+        mPullToRefreshAttacher.setRefreshComplete();
+        mRefreshing = false;
     }
 
     @Override
@@ -189,7 +206,6 @@ public class URLListActivity extends ListActivity
                 newURLDialog();
                 return true;
             case R.id.refresh_url_list:
-                mPullToRefreshAttacher.setRefreshing(true);
                 onRefreshStarted(getListView());
                 return true;
             case R.id.login:
@@ -223,7 +239,7 @@ public class URLListActivity extends ListActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        this.optionsMenu = menu;
+        this.mOptionsMenu = menu;
         getMenuInflater().inflate(R.menu.urllist_menu, menu);
 
         if (loggedIn) {
@@ -376,7 +392,7 @@ public class URLListActivity extends ListActivity
         }
 
         mAdapter.notifyDataSetChanged();
-        mPullToRefreshAttacher.setRefreshComplete();
+        stopRefreshAnimation();
     }
 
     @TargetApi(17)
@@ -713,6 +729,7 @@ public class URLListActivity extends ListActivity
                 });
 
         alert.show();
+        stopRefreshAnimation();
 //        MetricsDialogFragment dialog = new MetricsDialogFragment();
 //        dialog.show(getFragmentManager().beginTransaction(), "changelogdemo");
     }
@@ -722,9 +739,7 @@ public class URLListActivity extends ListActivity
         private String GETURL = "https://www.googleapis.com/urlshortener/v1/url";
         @Override
         protected void onPreExecute() {
-            DefaultHeaderTransformer ht = (DefaultHeaderTransformer) mPullToRefreshAttacher.getHeaderTransformer();
-            ht.setRefreshingText("Retrieving analytics");
-            mPullToRefreshAttacher.setRefreshing(true);
+            startRefreshAnimation("Retrieving analytics");
         }
 
         @Override
@@ -779,7 +794,6 @@ public class URLListActivity extends ListActivity
          * @param result JSONObject result received from Goo.gl
          */
         protected void onPostExecute(URLMetrics result) {
-            mPullToRefreshAttacher.setRefreshComplete();
             metricsDialog(result);
         }
     }
@@ -798,9 +812,7 @@ public class URLListActivity extends ListActivity
 
         @Override
         protected void onPreExecute() {
-            DefaultHeaderTransformer ht = (DefaultHeaderTransformer) mPullToRefreshAttacher.getHeaderTransformer();
-            ht.setRefreshingText("Shortening URL...");
-            mPullToRefreshAttacher.setRefreshing(true);
+            startRefreshAnimation("Shortening URL...");
         }
 
         @Override
@@ -863,7 +875,7 @@ public class URLListActivity extends ListActivity
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            mPullToRefreshAttacher.setRefreshComplete();
+            stopRefreshAnimation();
             displayShortenedURL(shortenedURL);
         }
     }

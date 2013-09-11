@@ -33,9 +33,9 @@ public class URLMetrics {
             int month = (dateInt % 10000) / 100;
             int day = dateInt % 100;
             this.dateCreated = month + "/" + day + "/" + year;
-//            this.analytics = object.getJSONObject("analytics");
-//            JSONObject allTime = analytics.getJSONObject("allTime");
-//            this.clicks = allTime.getInt("shortUrlClicks");
+            this.analytics = object.getJSONObject("analytics");
+            JSONObject allTime = analytics.getJSONObject("allTime");
+            this.clicks = allTime.getInt("shortUrlClicks");
         } catch (JSONException e) {
             e.printStackTrace();
         }
