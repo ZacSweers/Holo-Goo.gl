@@ -1,21 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             android:background="#e4e4e4"
-             android:orientation="vertical">
+              android:id="@+id/url_list"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#e4e4e4"
+              android:orientation="vertical">
 
-            <ListView
-                    android:id="@android:id/list"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginLeft="6dp"
-                    android:layout_marginRight="6dp"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginBottom="4dp"
-                    android:divider="#00000000"
-                    android:dividerHeight="10dp">
+    <ListView
+            android:id="@android:id/list"
+            android:layout_width="match_parent"
+            android:divider="#00000000"
+            android:dividerHeight="10dp"
+            android:layout_above="@+id/adView"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true">
 
-            </ListView>
+    </ListView>
+
+    <com.google.ads.AdView xmlns:ads="http://schemas.android.com/apk/lib/com.google.ads"
+                           android:id="@+id/ad"
+                           android:layout_width="match_parent"
+                           android:layout_height="wrap_content"
+                           ads:adUnitId="ca-app-pub-1301244565586267/7521531037"
+                           ads:adSize="BANNER"
+                           ads:testDevices="TEST_EMULATOR, 250F8DE330EF0C26BE44ABBC6812E9C4"
+                           ads:loadAdOnCreate="true"
+                           android:layout_alignParentBottom="true"
+                           android:layout_centerHorizontal="true"/>
 
 </LinearLayout>

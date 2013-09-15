@@ -45,6 +45,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
@@ -76,6 +77,8 @@ import java.util.HashMap;
 import uk.co.senab.actionbarpulltorefresh.library.DefaultHeaderTransformer;
 import uk.co.senab.actionbarpulltorefresh.library.PullToRefreshAttacher;
 
+import com.google.ads.*;
+
 public class URLListActivity extends ListActivity
         implements PullToRefreshAttacher.OnRefreshListener {
 
@@ -92,6 +95,7 @@ public class URLListActivity extends ListActivity
     private static ArrayList<HashMap<String, Object>> ITEMS = new ArrayList<HashMap<String, Object>>();
     private PullToRefreshAttacher mPullToRefreshAttacher;
     private boolean mRefreshing;
+    private AdView mAdView;
 
     static {
         HashMap<String, Object> map = new HashMap<String, Object>();
@@ -155,6 +159,12 @@ public class URLListActivity extends ListActivity
         } else {
             // No account, refresh only anonymous ones and leave button alone
         }
+
+        mAdView = (AdView) findViewById(R.id.ad);
+
+        AdRequest adRequest = new AdRequest();
+        adRequest.addKeyword("technology");
+        mAdView.loadAd(adRequest);
     }
 
     @Override
@@ -235,6 +245,14 @@ public class URLListActivity extends ListActivity
 //            onRefreshStarted(getListView());
 //        }
         // TODO: This for whatever reason gets an invalid credentials error from google
+    }
+
+    @Override
+    public void onDestroy() {
+        if (mAdView != null) {
+            mAdView.destroy();
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -384,7 +402,7 @@ public class URLListActivity extends ListActivity
                 HashMap<String, Object> map = new HashMap<String, Object>();
                 map.put("title", metrics.getShortURL());
                 map.put("longurl", metrics.getLongURL());
-                map.put("clicks", "<number>");
+                map.put("clicks", "" + ((int) (Math.random() * ((999) + 1))));
                 ITEMS.add(map);
             }
         } catch (JSONException e) {
@@ -754,7 +772,7 @@ public class URLListActivity extends ListActivity
                 }
 
                 results = new JSONObject(new JSONTokener(builder.toString()));
-                Log.d("hologoogl", results.toString());
+//                Log.d("hologoogl", results.toString());
             } catch (Exception e) {
                 e.printStackTrace();
                 String errorMessage = "Error: ";

@@ -26,7 +26,8 @@ dependencies {
     compile 'com.android.support:support-v4:13.0.+'
     compile files('libs/ActiveAndroid.jar')
     compile files('libs/acra-4.5.0.jar')
-    compile files('licensesdialog-1.1.0.jar')
+    compile files('libs/licensesdialog-1.1.0.jar')
+    compile files('libs/GoogleAdMobAdsSdk-6.4.1.jar')
     compile 'com.github.chrisbanes.actionbarpulltorefresh:library:0.7.+'
     compile 'com.andreabaccega:android-form-edittext:1.0.3'
     compile project(':libs:ChangeLogLibrary')
