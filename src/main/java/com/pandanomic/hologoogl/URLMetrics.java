@@ -37,7 +37,7 @@ public class URLMetrics {
             JSONObject allTime = analytics.getJSONObject("allTime");
             this.clicks = allTime.getInt("shortUrlClicks");
         } catch (JSONException e) {
-            e.printStackTrace();
+
         }
     }
 

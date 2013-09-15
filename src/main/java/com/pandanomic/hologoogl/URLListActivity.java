@@ -96,19 +96,19 @@ public class URLListActivity extends ListActivity
     static {
         HashMap<String, Object> map = new HashMap<String, Object>();
         map.put("title", "http://goo.gl/SYFV4");
-        map.put("createddate", "9/12/13");
+        map.put("clicks", "498");
         map.put("longurl", "www.somelongurl");
         ITEMS.add(map);
 
         HashMap<String, Object> map1 = new HashMap<String, Object>();
         map1.put("title", "http://goo.gl/4DR2e");
-        map1.put("createddate", "9/13/13");
+        map1.put("clicks", "360");
         map1.put("longurl", "www.somelongurl");
         ITEMS.add(map1);
 
         HashMap<String, Object> map2 = new HashMap<String, Object>();
         map2.put("title", "http://goo.gl/0XsgU");
-        map2.put("createddate", "8/12/12");
+        map2.put("clicks", "432");
         map2.put("longurl", "www.somelongurl");
         ITEMS.add(map2);
     }
@@ -124,8 +124,8 @@ public class URLListActivity extends ListActivity
          * Get ListView and give it an adapter to display the sample items
          */
         ListView listView = getListView();
-        String[] from = new String[] {"title", "longurl", "createddate"};
-        int[] to = new int[] { R.id.title, R.id.longurl, R.id.createddate};
+        String[] from = new String[] {"title", "longurl", "clicks"};
+        int[] to = new int[] { R.id.title, R.id.longurl, R.id.clicks};
         mAdapter = new SimpleAdapter(this, ITEMS, R.layout.url_list_item,
                 from, to);
         setListAdapter(mAdapter);
@@ -368,23 +368,23 @@ public class URLListActivity extends ListActivity
             return;
         }
 
-        Log.v("JSON RESULT", result.toString());
+//        Log.v("JSON RESULT", result.toString());
 
         try {
             int totalItems = result.getInt("totalItems");
 
             JSONArray array = result.getJSONArray("items");
-            Log.d("array", totalItems + " " + array.toString());
+//            Log.d("array", totalItems + " " + array.toString());
 
             JSONObject tmpobj = array.getJSONObject(0);
-            Log.d("object", tmpobj.getString("id"));
+//            Log.d("object", tmpobj.getString("id"));
             ITEMS.clear();
             for (int i = 0; i < 30; ++i) {
                 URLMetrics metrics = new URLMetrics(array.getJSONObject(i));
                 HashMap<String, Object> map = new HashMap<String, Object>();
                 map.put("title", metrics.getShortURL());
                 map.put("longurl", metrics.getLongURL());
-                map.put("createddate", metrics.getDateCreated());
+                map.put("clicks", "<number>");
                 ITEMS.add(map);
             }
         } catch (JSONException e) {
@@ -400,13 +400,6 @@ public class URLListActivity extends ListActivity
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setTitle("Shorten New URL");
         alert.setCancelable(true);
-
-//        final EditText input = new EditText(this);
-//        input.setInputType(InputType.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT);
-//        input.setHint("Type or paste a URL here");
-
-//        Dialog dialog = new Dialog(this);
-//        dialog.setContentView(R.layout.edittext_url);
 
         LayoutInflater layoutInflater = LayoutInflater.from(this);
         View dialog_layout = layoutInflater.inflate(R.layout.edittext_url, null);
@@ -536,13 +529,6 @@ public class URLListActivity extends ListActivity
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 copyURL(resultURL);
-            }
-        });
-
-        alert.setNeutralButton("Details", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Toast.makeText(getBaseContext(), "TODO", Toast.LENGTH_LONG).show();
             }
         });
 

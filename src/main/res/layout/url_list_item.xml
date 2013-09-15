@@ -5,31 +5,6 @@
               android:orientation="horizontal"
               android:background="@drawable/list_selector">
 
-    <TextView
-            android:id="@+id/createddate"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:textSize="12sp"
-            android:layout_weight="100"
-            android:textColor="@android:color/darker_gray"
-            android:text="9/12/13"
-            android:gravity="center_vertical|center_horizontal"/>
-
-    <View
-            android:layout_width="5dp"
-            android:layout_height="fill_parent"
-            android:background="@android:color/transparent"/>
-
-    <View
-            android:layout_width="1dp"
-            android:layout_height="fill_parent"
-            android:background="@android:color/darker_gray"/>
-
-    <View
-            android:layout_width="5dp"
-            android:layout_height="fill_parent"
-            android:background="@android:color/transparent"/>
-
     <LinearLayout
             android:orientation="vertical"
             android:layout_width="wrap_content"
@@ -42,8 +17,8 @@
                 android:layout_height="wrap_content"
                 android:textSize="20sp"
                 android:layout_weight="1"
-                android:gravity="center_vertical|center_horizontal"
-                android:text="SomeURL"/>
+                android:text="SomeURL"
+                android:gravity="center_vertical"/>
 
         <View
                 android:layout_width="fill_parent"
@@ -67,9 +42,46 @@
                 android:textSize="15sp"
                 android:layout_weight="1"
                 android:textColor="@color/holo_blue"
-                android:gravity="center_vertical|center_horizontal"
+                android:gravity="center_vertical"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:text="SomeURL"/>
+    </LinearLayout>
+
+    <View
+            android:layout_width="5dp"
+            android:layout_height="fill_parent"
+            android:background="@android:color/transparent"/>
+
+    <View
+            android:layout_width="1dp"
+            android:layout_height="fill_parent"
+            android:background="@android:color/darker_gray"/>
+
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_weight="75"
+            android:layout_gravity="center_horizontal|top">
+
+        <TextView
+                android:id="@+id/clicks"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:textSize="25sp"
+                android:layout_weight="1"
+                android:textColor="@android:color/holo_red_light"
+                android:gravity="center_vertical|center_horizontal"
+                android:text="0"/>
+
+        <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:textColor="@android:color/holo_red_light"
+                android:textSize="15sp"
+                android:gravity="center_vertical|center_horizontal"
+                android:text="clicks"/>
     </LinearLayout>
 </LinearLayout>
