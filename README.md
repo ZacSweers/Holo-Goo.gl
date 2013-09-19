@@ -14,16 +14,15 @@ I apologize in advance for how terrible my code probably looks.
 ### As of right now, it can do the following: 
 * Authenticate with Google using Android's native account manager
 * Shorten a new URL (anonymously or authenticated)
-* Get user's URL history
+* Get user's URL history + clicks
 * Share a shortened URL to other apps as well as receive (and shorten) URLs
 * And it's a Card UI!
 
 ### Some upcoming TODO's
-* Retrieve the user history and # of clicks in same refresh call.
-     User history and URL metrics are two separate API calls. Right now the history list just puts random numbers for show-and-tell (but the metrics dialog on click still shows the correct number)
-* Detailed URL metrics activity
+* Improve refresh, it's really slow right now
+* Detailed URL metrics activity, including the use of the beautiful [Holo Graph](https://bitbucket.org/danielnadeau/holographlibrary) library
 * Caching URL history (anonymous and authenticated)
-* Load more URL history results when scrolled to the bottom
+* Load more URL history results when scrolled to the bottom (it's a paging thing)
 
 ### I've use a few wonderful third party libraries, including the following:
 * [ActiveAndroid](https://github.com/pardom/ActiveAndroid)
