@@ -20,7 +20,7 @@ I apologize in advance for how terrible my code probably looks.
 
 ### Some upcoming TODO's
 * Retrieve the user history and # of clicks in same refresh call.
-* * User history and URL metrics are two separate API calls. Right now the history list just puts random numbers for show-and-tell (but the metrics dialog on click still shows the correct number)
+     User history and URL metrics are two separate API calls. Right now the history list just puts random numbers for show-and-tell (but the metrics dialog on click still shows the correct number)
 * Detailed URL metrics activity
 * Caching URL history (anonymous and authenticated)
 * Load more URL history results when scrolled to the bottom
