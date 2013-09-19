@@ -195,7 +195,8 @@ public class URLListActivity extends ListActivity
 
         startRefreshAnimation("Refreshing...");
         String authToken = authPreferences.getToken();
-        new RefreshListTask().execute(authToken);
+//        new RefreshListTask().execute(authToken);
+        new RefreshHistoryTask().execute(authToken);
     }
 
     public void startRefreshAnimation(String message) {
@@ -645,6 +646,20 @@ public class URLListActivity extends ListActivity
         requestToken(true);
     }
 
+    public void updateHistory(ArrayList<URLMetrics> metrics) {
+        ITEMS.clear();
+        for (URLMetrics metric : metrics) {
+            HashMap<String, Object> map = new HashMap<String, Object>();
+            map.put("title", metric.getShortURL());
+            map.put("longurl", metric.getLongURL());
+            map.put("clicks", "" + metric.getClicks());
+            ITEMS.add(map);
+        }
+
+        mAdapter.notifyDataSetChanged();
+        stopRefreshAnimation();
+    }
+
     private class RefreshListTask extends AsyncTask<String, Void, JSONObject> {
         private String GETURL = "https://www.googleapis.com/urlshortener/v1/url/history";
         private final String LOGTAG = "RefreshHistory";
@@ -897,6 +912,173 @@ public class URLListActivity extends ListActivity
             }
             stopRefreshAnimation();
             displayShortenedURL(shortenedURL);
+        }
+    }
+
+    private class RefreshHistoryTask extends AsyncTask<String, Void, Boolean> {
+        private final String LOGTAG = "RefreshHistory";
+        private String HISTORYURL = "https://www.googleapis.com/urlshortener/v1/url/history";
+        private String METRICSURL = "https://www.googleapis.com/urlshortener/v1/url";
+        private ArrayList<URLMetrics> metricsList = new ArrayList<URLMetrics>();
+
+        @Override
+        protected void onPreExecute() {
+            startRefreshAnimation("Retrieving history");
+        }
+
+        @Override
+        protected Boolean doInBackground(String... params) {
+
+            // Get history
+            if (!checkNetwork()) {
+                Toast.makeText(getParent(), "Not connected to the internet", Toast.LENGTH_LONG).show();
+                Log.e(LOGTAG, "No connection");
+                return null;
+            }
+
+            String authToken = params[0];
+
+            JSONObject history_results = historyRequest(authToken);
+
+            if (history_results == null) {
+                return false;
+            }
+
+            // Got history, now create list of URLMetrics
+            Log.d(LOGTAG, "Parsing history result");
+            Log.d(LOGTAG, history_results.toString());
+
+
+            int totalItems = 30;
+            JSONArray itemsArray = null;
+            try {
+                totalItems = history_results.getInt("totalItems");
+                itemsArray = history_results.getJSONArray("items");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            ITEMS.clear();
+            for (int i = 0; i < 30; ++i) {
+                URLMetrics metric = null;
+                try {
+                    String id = itemsArray.getJSONObject(i).getString("id");
+                    Log.i(LOGTAG, "id is " + id);
+                    metric = new URLMetrics(id);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                refreshAnalytics(metric);
+                metricsList.add(metric);
+            }
+
+            return true;
+        }
+
+        /**
+         * Post-execution stuff
+         * @param result JSONObject result received from Goo.gl
+         */
+        protected void onPostExecute(Boolean success) {
+            if (success) {
+                updateHistory(metricsList);
+            }
+        }
+
+        private JSONObject historyRequest(String authToken) {
+            JSONObject history_results = null;
+
+            Log.d(LOGTAG, "Fetching data");
+            try {
+                HttpParams httpParams = new BasicHttpParams();
+                HttpConnectionParams.setConnectionTimeout(httpParams, 5000);
+                HttpConnectionParams.setSoTimeout(httpParams, 5000);
+
+                DefaultHttpClient client = new DefaultHttpClient(httpParams);
+                HttpGet get = new HttpGet(HISTORYURL);
+
+                get.setHeader("Authorization", "Bearer " + authToken);
+
+                Log.d(LOGTAG, "Requesting");
+                HttpResponse response = client.execute(get);
+
+                if (response.getStatusLine().getStatusCode() == 404) {
+                    Log.e(LOGTAG, "404 Not found");
+                    return null;
+                }
+
+                Log.d(LOGTAG, "Parsing response");
+                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+                StringBuilder builder = new StringBuilder();
+                for (String line; (line = reader.readLine()) != null;) {
+                    builder.append(line).append("\n");
+                }
+
+                history_results = new JSONObject(new JSONTokener(builder.toString()));
+                Log.d(LOGTAG, "Finished parsing");
+            } catch (Exception e) {
+                e.printStackTrace();
+                String errorMessage = "Error: ";
+                if (e instanceof UnsupportedEncodingException) {
+                    errorMessage += "Encoding exception";
+                } else if (e instanceof ClientProtocolException) {
+                    errorMessage += "POST exception";
+                } else if (e instanceof IOException) {
+                    errorMessage += "IO Exception in parsing response";
+                } else {
+                    errorMessage += "JSON parsing exception";
+                }
+
+                Log.e("history", errorMessage);
+            }
+
+            return history_results;
+        }
+
+        private void refreshAnalytics(URLMetrics metric) {
+            String shortenedURL = metric.getShortURL();
+            String tmpScope = METRICSURL + "?shortUrl=" + shortenedURL + "&projection=FULL";
+//            METRICSURL += "?shortUrl=" + shortenedURL;
+//            METRICSURL += "&projection=FULL";
+
+            Log.d(LOGTAG, "Fetching analytics");
+            JSONObject results = null;
+            try {
+                HttpParams httpParams = new BasicHttpParams();
+                HttpConnectionParams.setConnectionTimeout(httpParams, 5000);
+                HttpConnectionParams.setSoTimeout(httpParams, 5000);
+
+                DefaultHttpClient client = new DefaultHttpClient(httpParams);
+                HttpGet get = new HttpGet(tmpScope);
+
+                HttpResponse response = client.execute(get);
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+                StringBuilder builder = new StringBuilder();
+                for (String line; (line = reader.readLine()) != null;) {
+                    builder.append(line).append("\n");
+                }
+
+                results = new JSONObject(new JSONTokener(builder.toString()));
+//                Log.d("hologoogl", results.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+                String errorMessage = "Error: ";
+                if (e instanceof UnsupportedEncodingException) {
+                    errorMessage += "Encoding exception";
+                } else if (e instanceof ClientProtocolException) {
+                    errorMessage += "POST exception";
+                } else if (e instanceof IOException) {
+                    errorMessage += "IO Exception in parsing response";
+                } else {
+                    errorMessage += "JSON parsing exception";
+                }
+
+                Log.e("googl:retrieveURLTask", errorMessage);
+            }
+
+            if (results != null) {
+                metric.setAnalytics(results);
+            }
         }
     }
 }

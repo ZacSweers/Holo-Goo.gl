@@ -22,27 +22,49 @@ public class URLMetrics {
     private String LOGTAG = "URLMetrics";
 
     public URLMetrics(JSONObject object) {
+//        Log.i(LOGTAG, object.toString());
+//        try {
+//            this.shortURL = object.getString("id");
+//            this.longURL = object.getString("longUrl");
+//            String date = object.getString("created").substring(0,10);
+//            date = date.replaceAll("-", "");
+//            int dateInt = Integer.parseInt(date);
+//            int year = dateInt / 10000;
+//            int month = (dateInt % 10000) / 100;
+//            int day = dateInt % 100;
+//            this.dateCreated = month + "/" + day + "/" + year;
+//            this.analytics = object.getJSONObject("analytics");
+//            JSONObject allTime = analytics.getJSONObject("allTime");
+//            this.clicks = allTime.getInt("shortUrlClicks");
+//        } catch (JSONException e) {
+//
+//        }
+    }
+
+    public URLMetrics(String shortURL) {
+        this.shortURL = shortURL;
+    }
+
+    public void setAnalytics(JSONObject object) {
         Log.i(LOGTAG, object.toString());
         try {
-            this.shortURL = object.getString("id");
+//            this.shortURL = object.getString("id");
+//            Log.i(LOGTAG, "Short URL is " + shortURL);
             this.longURL = object.getString("longUrl");
-            String date = object.getString("created").substring(0,10);
-            date = date.replaceAll("-", "");
-            int dateInt = Integer.parseInt(date);
-            int year = dateInt / 10000;
-            int month = (dateInt % 10000) / 100;
-            int day = dateInt % 100;
-            this.dateCreated = month + "/" + day + "/" + year;
+//            String date = object.getString("created").substring(0,10);
+//            date = date.replaceAll("-", "");
+//            int dateInt = Integer.parseInt(date);
+//            int year = dateInt / 10000;
+//            int month = (dateInt % 10000) / 100;
+//            int day = dateInt % 100;
+//            this.dateCreated = month + "/" + day + "/" + year;
             this.analytics = object.getJSONObject("analytics");
             JSONObject allTime = analytics.getJSONObject("allTime");
             this.clicks = allTime.getInt("shortUrlClicks");
+            Log.i(LOGTAG, "Clicks - " + clicks);
         } catch (JSONException e) {
 
         }
-    }
-
-    public void setAnalytics(JSONObject analytics) {
-        this.analytics = analytics;
     }
 
     public String getDateCreated() {
