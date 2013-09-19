@@ -11,18 +11,18 @@ It's been a ton of fun developing, albeit I've had to slow down since school sta
 
 I apologize in advance for how terrible my code probably looks.
 
-*As of right now, it can do the following:*
+### As of right now, it can do the following: 
 * Authenticate with Google using Android's native account manager
 * Shorten a new URL (anonymously or authenticated)
 * Get user's URL history
 * Share a shortened URL to other apps as well as receive (and shorten) URLs
 
-*Some upcoming TODO's*
+### Some upcoming TODO's
 * Detailed URL metrics activity
 * Caching URL history (anonymous and authenticated)
 * Load more URL history results when scrolled to the bottom
 
-*I've use a few wonderful third party libraries, including the following:*
+### I've use a few wonderful third party libraries, including the following:
 * [ActiveAndroid](https://github.com/pardom/ActiveAndroid)
 * [ACRA](https://github.com/ACRA/acra)
 * [LicensesDialog](https://github.com/PSDev/LicensesDialog)
