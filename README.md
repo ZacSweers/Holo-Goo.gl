@@ -16,8 +16,10 @@ I apologize in advance for how terrible my code probably looks.
 * Shorten a new URL (anonymously or authenticated)
 * Get user's URL history
 * Share a shortened URL to other apps as well as receive (and shorten) URLs
+* And it's a Card UI!
 
 ### Some upcoming TODO's
+* Retrieve the user history and # of clicks in same refresh call (right now it doesn't show clicks in the main URL)
 * Detailed URL metrics activity
 * Caching URL history (anonymous and authenticated)
 * Load more URL history results when scrolled to the bottom
