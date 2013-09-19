@@ -803,7 +803,7 @@ public class URLListActivity extends ListActivity
                 }
 
                 results = new JSONObject(new JSONTokener(builder.toString()));
-//                Log.d("hologoogl", results.toString());
+                Log.d("hologoogl", results.toString());
             } catch (Exception e) {
                 e.printStackTrace();
                 String errorMessage = "Error: ";
