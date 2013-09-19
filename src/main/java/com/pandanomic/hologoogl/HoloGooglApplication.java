@@ -1,7 +1,10 @@
 package com.pandanomic.hologoogl;
 
 import android.app.Application;
+import android.content.Intent;
+import android.net.Uri;
 import android.util.Log;
+import android.view.View;
 
 import org.acra.*;
 import org.acra.annotation.*;
@@ -16,13 +19,13 @@ import org.acra.annotation.*;
         resDialogCommentPrompt = R.string.crash_dialog_comment_prompt, // optional. when defined, adds a user text field input with this text resource as a label
         resDialogOkToast = R.string.crash_dialog_ok_toast // optional. displays a Toast message when the user accepts to send a report.
 )
-public class MyApplication extends Application {
+public class HoloGooglApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
 
         // The following line triggers the initialization of ACRA
         ACRA.init(this);
-        Log.i("MyApplication", "ACRA initialized");
+        Log.i("HoloGooglApplication", "ACRA initialized");
     }
 }

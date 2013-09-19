@@ -25,5 +25,6 @@
     <string name="crash_dialog_title">Oh no!</string>
     <string name="crash_dialog_ok_toast">Thanks!</string>
     <string name="crash_dialog_comment_prompt">Add any comments here (what you were doing, etc)</string>
+    <string name="about">About</string>
 
 </resources>

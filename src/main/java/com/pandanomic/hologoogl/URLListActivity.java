@@ -21,6 +21,7 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -215,9 +216,9 @@ public class URLListActivity extends ListActivity
             case R.id.shorten_new_URL:
                 newURLDialog();
                 return true;
-            case R.id.refresh_url_list:
-                onRefreshStarted(getListView());
-                return true;
+//            case R.id.refresh_url_list:
+//                onRefreshStarted(getListView());
+//                return true;
             case R.id.login:
                 accountSetup();
                 return true;
@@ -228,11 +229,26 @@ public class URLListActivity extends ListActivity
                 return true;
             case R.id.action_settings:
                 return true;
+            case R.id.about:
+                aboutDialog();
+                return true;
             case R.id.send_feedback:
                 sendFeedback();
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void aboutDialog() {
+        Dialog dialog = null;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        Context context = getApplicationContext();
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(LAYOUT_INFLATER_SERVICE);
+        View layout = inflater.inflate(R.layout.dialog_about, null);
+        builder.setView(layout);
+        builder.setPositiveButton("OK", null);
+        dialog = builder.create();
+        dialog.show();
     }
 
     @Override
