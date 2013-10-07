@@ -19,18 +19,18 @@ I apologize in advance for how terrible my code probably looks.
 * And it's a Card UI!
 
 ### Some upcoming TODO's
-* Improve refresh, it's really slow right now
+* ~~Improve refresh, it's really slow right now~~ Done!
 * Detailed URL metrics activity, including the use of the beautiful [Holo Graph](https://bitbucket.org/danielnadeau/holographlibrary) library
 * Caching URL history (anonymous and authenticated)
 * Load more URL history results when scrolled to the bottom (it's a paging thing)
 
 ### I've use a few wonderful third party libraries, including the following:
-* [ActiveAndroid](https://github.com/pardom/ActiveAndroid)
+* [ActiveAndroid](https://github.com/pardom/ActiveAndroid) (not implemented yet)
 * [ACRA](https://github.com/ACRA/acra)
-* [LicensesDialog](https://github.com/PSDev/LicensesDialog)
+* [LicensesDialog](https://github.com/PSDev/LicensesDialog) (not implemented yet)
 * [ActionbarPullToRefresh](https://github.com/chrisbanes/ActionBar-PullToRefresh)
 * [Android-form-edittext](https://github.com/vekexasia/android-form-edittext)
-* [ChangeLogLibrary](https://github.com/gabrielemariotti/changeloglib)
+* [ChangeLogLibrary](https://github.com/gabrielemariotti/changeloglib) (not implemented yet)
 
 ## License
 
