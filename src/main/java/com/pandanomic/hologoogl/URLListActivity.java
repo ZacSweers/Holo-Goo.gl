@@ -34,6 +34,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 import android.text.Html;
 import android.text.format.Time;
@@ -43,10 +44,14 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
@@ -96,20 +101,7 @@ public class URLListActivity extends ListActivity
     private PullToRefreshAttacher mPullToRefreshAttacher;
     private boolean mRefreshing;
     private AdView mAdView;
-
-    static {
-        HashMap<String, Object> map = new HashMap<String, Object>();
-        map.put("title", "http://goo.gl/SYFV4");
-        map.put("clicks", "498");
-        map.put("longurl", "www.somelongurl.com/dsfgkljheiubs");
-        mURLListItems.add(map);
-
-        HashMap<String, Object> map1 = new HashMap<String, Object>();
-        map1.put("title", "http://goo.gl/4DR2e");
-        map1.put("clicks", "360");
-        map1.put("longurl", "Pull down to refresh!");
-        mURLListItems.add(map1);
-    }
+    private String mNextPageToken;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -124,6 +116,9 @@ public class URLListActivity extends ListActivity
         int[] to = new int[] { R.id.title, R.id.longurl, R.id.clicks};
         mAdapter = new SimpleAdapter(this, mURLListItems, R.layout.url_list_item,
                 from, to);
+        if (mURLListItems.isEmpty()) {
+            findViewById(R.id.welcome).setVisibility(View.VISIBLE);
+        }
         setListAdapter(mAdapter);
 
         /**
@@ -157,6 +152,19 @@ public class URLListActivity extends ListActivity
         AdRequest adRequest = new AdRequest();
         adRequest.addKeyword("technology");
         mAdView.loadAd(adRequest);
+
+        // Start refresh
+//        Handler handler = new Handler();
+//        if (savedInstanceState == null && mGoogleLoggedIn) {
+//            startRefreshAnimation("Refreshing...");
+//            handler.postDelayed(new Runnable() {
+//                public void run() {
+//                    reauthorizeGoogle();
+//                    Log.d("Oncreate", "reauthorized google");
+//                    onRefreshStarted(getListView());
+//                }
+//            }, 3000);
+//        }
     }
 
     @Override
@@ -173,25 +181,49 @@ public class URLListActivity extends ListActivity
 
     @Override
     public void onRefreshStarted(View view) {
-        if (!checkNetwork() || mRefreshing) {
+        Log.d("RefreshStarted", "starting refresh");
+        Log.d("startRefresh", "Checking network");
+        if (!checkNetwork()) {
             stopRefreshAnimation();
             return;
         }
 
+        Log.d("startRefresh", "Checking credentials");
         if (!mGoogleLoggedIn) {
-            Toast.makeText(this, "Please log in first", Toast.LENGTH_LONG).show();
+            AlertDialog.Builder alert = new AlertDialog.Builder(this);
+            alert.setMessage("You must authenticate with your Google account to get your history! \nDo you want to log in?")
+                    .setCancelable(true)
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            accountSetup();
+                        }
+                    });
+
+            alert.setNegativeButton("No, thanks", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                }
+            });
+
+            alert.create().show();
             stopRefreshAnimation();
             return;
         }
 
-        startRefreshAnimation("Refreshing...");
+        Log.d("startRefresh", "Checking refreshing");
+        if (!mRefreshing) {
+            startRefreshAnimation("Refreshing...");
+        }
+
+        Log.d("startRefresh", "Getting auth token");
         String authToken = mAuthPreferences.getToken();
-//        new RefreshListTask().execute(authToken);
+
+        Log.d("startRefresh", "Starting task");
         new RefreshHistoryTask().execute(authToken);
     }
 
     public void startRefreshAnimation(String message) {
-        assert !mRefreshing;
         mRefreshing = true;
         ((DefaultHeaderTransformer) mPullToRefreshAttacher.getHeaderTransformer()).setRefreshingText(message);
         mPullToRefreshAttacher.setRefreshing(true);
@@ -208,9 +240,6 @@ public class URLListActivity extends ListActivity
             case R.id.shorten_new_URL:
                 newURLDialog();
                 return true;
-//            case R.id.refresh_url_list:
-//                onRefreshStarted(getListView());
-//                return true;
             case R.id.login:
                 accountSetup();
                 return true;
@@ -290,6 +319,32 @@ public class URLListActivity extends ListActivity
             menu.findItem(R.id.logout).setVisible(false);
         }
         return super.onPrepareOptionsMenu(menu);
+    }
+
+    public void welcomeClick(View v) {
+        if (!mGoogleLoggedIn) {
+            AlertDialog.Builder alert = new AlertDialog.Builder(this);
+            alert.setMessage("Do you want to authenticate with your Google account first?")
+                    .setCancelable(true)
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            accountSetup();
+                        }
+                    });
+
+            alert.setNegativeButton("No, thanks", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    newURLDialog();
+                }
+            });
+
+            alert.create().show();
+
+        } else {
+            newURLDialog();
+        }
     }
 
     public void accountSetup() {
@@ -383,43 +438,10 @@ public class URLListActivity extends ListActivity
         mGoogleLoggedIn = false;
         mURLListItems.clear();
         mAdapter.notifyDataSetChanged();
+        findViewById(R.id.welcome).setVisibility(View.VISIBLE);
         Intent intent = new Intent(URLListActivity.this, URLListActivity.class);
         startActivity(intent);
         finish();
-    }
-
-    public void refreshCallback(JSONObject result) {
-        Log.v(LOGTAG, "Finished refresh, parsing result");
-        if (result == null) {
-            Toast.makeText(this, "Error retrieving data", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-//        Log.v("JSON RESULT", result.toString());
-
-        try {
-            int totalItems = result.getInt("totalItems");
-
-            JSONArray array = result.getJSONArray("items");
-//            Log.d("array", totalItems + " " + array.toString());
-
-            JSONObject tmpobj = array.getJSONObject(0);
-//            Log.d("object", tmpobj.getString("id"));
-            mURLListItems.clear();
-            for (int i = 0; i < 30; ++i) {
-                URLMetrics metrics = new URLMetrics(array.getJSONObject(i));
-                HashMap<String, Object> map = new HashMap<String, Object>();
-                map.put("title", metrics.getShortURL());
-                map.put("longurl", metrics.getLongURL());
-                map.put("clicks", "" + ((int) (Math.random() * ((999) + 1))));
-                mURLListItems.add(map);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        mAdapter.notifyDataSetChanged();
-        stopRefreshAnimation();
     }
 
     @TargetApi(17)
@@ -571,6 +593,7 @@ public class URLListActivity extends ListActivity
                         map.put("createddate", now.toString());
                         map.put("longurl", "N/A");
                         mURLListItems.add(map);
+                        findViewById(R.id.welcome).setVisibility(View.GONE);
                         mAdapter.notifyDataSetChanged();
                     }
                 }
@@ -623,7 +646,7 @@ public class URLListActivity extends ListActivity
 
     private boolean checkAirplaneMode() {
         if (APIVERSION >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            return Settings.System.getInt(getBaseContext().getContentResolver(),
+            return Settings.Global.getInt(getBaseContext().getContentResolver(),
                     Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
         } else {
             return Settings.System.getInt(getBaseContext().getContentResolver(),
@@ -638,9 +661,9 @@ public class URLListActivity extends ListActivity
         requestToken(true);
     }
 
-    public void updateHistory(ArrayList<URLMetrics> metrics) {
+    public void updateHistory(ArrayList<URLObject> metrics) {
         mURLListItems.clear();
-        for (URLMetrics metric : metrics) {
+        for (URLObject metric : metrics) {
             HashMap<String, Object> map = new HashMap<String, Object>();
             map.put("title", metric.getShortURL());
             map.put("longurl", metric.getLongURL());
@@ -648,90 +671,12 @@ public class URLListActivity extends ListActivity
             mURLListItems.add(map);
         }
 
+        findViewById(R.id.welcome).setVisibility(View.GONE);
         mAdapter.notifyDataSetChanged();
         stopRefreshAnimation();
     }
 
-    private class RefreshListTask extends AsyncTask<String, Void, JSONObject> {
-        private String GETURL = "https://www.googleapis.com/urlshortener/v1/url/history";
-        private final String LOGTAG = "RefreshHistory";
-
-        @Override
-        protected void onPreExecute() {
-//            this.progressDialog.show();
-        }
-
-        @Override
-        protected JSONObject doInBackground(String... params) {
-            String authToken;
-
-            if (!checkNetwork()) {
-                Toast.makeText(getParent(), "Not connected to the internet", Toast.LENGTH_LONG).show();
-                Log.e(LOGTAG, "No connection");
-                return null;
-            }
-
-            authToken = params[0];
-
-            JSONObject results;
-
-            Log.d(LOGTAG, "Fetching data");
-            try {
-                HttpParams httpParams = new BasicHttpParams();
-                HttpConnectionParams.setConnectionTimeout(httpParams, 5000);
-                HttpConnectionParams.setSoTimeout(httpParams, 5000);
-
-                DefaultHttpClient client = new DefaultHttpClient(httpParams);
-                HttpGet get = new HttpGet(GETURL);
-
-                get.setHeader("Authorization", "Bearer " + authToken);
-
-                Log.d(LOGTAG, "Requesting");
-                HttpResponse response = client.execute(get);
-
-                if (response.getStatusLine().getStatusCode() == 404) {
-                    Log.e(LOGTAG, "404 Not found");
-                    return null;
-                }
-
-                Log.d(LOGTAG, "Parsing response");
-                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-                StringBuilder builder = new StringBuilder();
-                for (String line; (line = reader.readLine()) != null;) {
-                    builder.append(line).append("\n");
-                }
-
-                results = new JSONObject(new JSONTokener(builder.toString()));
-                Log.d(LOGTAG, "Finished parsing");
-            } catch (Exception e) {
-                e.printStackTrace();
-                String errorMessage = "Error: ";
-                if (e instanceof UnsupportedEncodingException) {
-                    errorMessage += "Encoding exception";
-                } else if (e instanceof ClientProtocolException) {
-                    errorMessage += "POST exception";
-                } else if (e instanceof IOException) {
-                    errorMessage += "IO Exception in parsing response";
-                } else {
-                    errorMessage += "JSON parsing exception";
-                }
-
-                Log.e("history", errorMessage);
-                return null;
-            }
-            return results;
-        }
-
-        /**
-         * Post-execution stuff
-         * @param result JSONObject result received from Goo.gl
-         */
-        protected void onPostExecute(JSONObject result) {
-            refreshCallback(result);
-        }
-    }
-
-    private void metricsDialog(URLMetrics metrics) {
+    private void metricsDialog(URLObject metrics) {
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setTitle("Analytics")
                 .setCancelable(true)
@@ -761,7 +706,7 @@ public class URLListActivity extends ListActivity
 //        dialog.show(getFragmentManager().beginTransaction(), "changelogdemo");
     }
 
-    private class refreshMetrics extends AsyncTask<String, Void, URLMetrics> {
+    private class refreshMetrics extends AsyncTask<String, Void, URLObject> {
         private final String LOGTAG = "RefreshHistory";
         private String GETURL = "https://www.googleapis.com/urlshortener/v1/url";
         @Override
@@ -770,7 +715,7 @@ public class URLListActivity extends ListActivity
         }
 
         @Override
-        protected URLMetrics doInBackground(String... params) {
+        protected URLObject doInBackground(String... params) {
             String shortenedURL = params[0];
             GETURL += "?shortUrl=" + shortenedURL;
             GETURL += "&projection=FULL";
@@ -813,14 +758,14 @@ public class URLListActivity extends ListActivity
                 return null;
             }
 
-            return new URLMetrics(results);
+            return new URLObject(results);
         }
 
         /**
          * Post-execution stuff
          * @param result JSONObject result received from Goo.gl
          */
-        protected void onPostExecute(URLMetrics result) {
+        protected void onPostExecute(URLObject result) {
             metricsDialog(result);
         }
     }
@@ -909,9 +854,9 @@ public class URLListActivity extends ListActivity
 
     private class RefreshHistoryTask extends AsyncTask<String, Void, Boolean> {
         private final String LOGTAG = "RefreshHistory";
-        private String HISTORYURL = "https://www.googleapis.com/urlshortener/v1/url/history";
+        private String HISTORYURL = "https://www.googleapis.com/urlshortener/v1/url/history?projection=ANALYTICS_CLICKS";
         private String METRICSURL = "https://www.googleapis.com/urlshortener/v1/url";
-        private ArrayList<URLMetrics> metricsList = new ArrayList<URLMetrics>();
+        private ArrayList<URLObject> metricsList = new ArrayList<URLObject>();
 
         @Override
         protected void onPreExecute() {
@@ -930,13 +875,18 @@ public class URLListActivity extends ListActivity
 
             String authToken = params[0];
 
+//            if (params.length == 2) {
+//                HISTORYURL += "&projection="
+//            }
+
             JSONObject history_results = historyRequest(authToken);
 
-            if (history_results == null) {
+            if (history_results == null || history_results.has("error")) {
+                Log.e(LOGTAG, "Error");
                 return false;
             }
 
-            // Got history, now create list of URLMetrics
+            // Got history, now create list of URLObject
             Log.d(LOGTAG, "Parsing history result");
             Log.d(LOGTAG, history_results.toString());
 
@@ -946,21 +896,31 @@ public class URLListActivity extends ListActivity
             try {
                 totalItems = history_results.getInt("totalItems");
                 itemsArray = history_results.getJSONArray("items");
+                if (history_results.has("nextPageToken")) {
+                    mNextPageToken = history_results.getString("nextPageToken");
+                } else {
+                    mNextPageToken = null;
+                }
+
+                mURLListItems.clear();
+                for (int i = 0; i < 30; ++i) {
+                    URLObject metric = null;
+                    try {
+                        String id = itemsArray.getJSONObject(i).getString("id");
+                        int clicks = itemsArray.getJSONObject(i).getJSONObject("analytics").getJSONObject("allTime").getInt("shortUrlClicks");
+                        Log.i(LOGTAG, "id is " + id);
+                        metric = new URLObject(id);
+                        metric.setClicks(clicks);
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+//                    refreshAnalytics(metric);
+                    metricsList.add(metric);
+                }
+
             } catch (JSONException e) {
                 e.printStackTrace();
-            }
-            mURLListItems.clear();
-            for (int i = 0; i < 30; ++i) {
-                URLMetrics metric = null;
-                try {
-                    String id = itemsArray.getJSONObject(i).getString("id");
-                    Log.i(LOGTAG, "id is " + id);
-                    metric = new URLMetrics(id);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                refreshAnalytics(metric);
-                metricsList.add(metric);
             }
 
             return true;
@@ -973,6 +933,11 @@ public class URLListActivity extends ListActivity
         protected void onPostExecute(Boolean success) {
             if (success) {
                 updateHistory(metricsList);
+                stopRefreshAnimation();
+            }
+            else {
+                Toast.makeText(getBaseContext(), "History Fetching Failed", Toast.LENGTH_LONG).show();
+                stopRefreshAnimation();
             }
         }
 
@@ -1026,51 +991,45 @@ public class URLListActivity extends ListActivity
             return history_results;
         }
 
-        private void refreshAnalytics(URLMetrics metric) {
-            String shortenedURL = metric.getShortURL();
-            String tmpScope = METRICSURL + "?shortUrl=" + shortenedURL + "&projection=FULL";
-//            METRICSURL += "?shortUrl=" + shortenedURL;
-//            METRICSURL += "&projection=FULL";
+    }
 
-            Log.d(LOGTAG, "Fetching analytics");
-            JSONObject results = null;
-            try {
-                HttpParams httpParams = new BasicHttpParams();
-                HttpConnectionParams.setConnectionTimeout(httpParams, 5000);
-                HttpConnectionParams.setSoTimeout(httpParams, 5000);
+    /**
+     * Code courtesy of Ben Cull
+     * http://benjii.me/2010/08/endless-scrolling-listview-in-android/
+     */
+    public class EndlessScrollListener implements AbsListView.OnScrollListener {
 
-                DefaultHttpClient client = new DefaultHttpClient(httpParams);
-                HttpGet get = new HttpGet(tmpScope);
+        private int visibleThreshold = 5;
+        private int currentPage = 0;
+        private int previousTotal = 0;
+        private boolean loading = true;
 
-                HttpResponse response = client.execute(get);
+        public EndlessScrollListener() {
+        }
+        public EndlessScrollListener(int visibleThreshold) {
+            this.visibleThreshold = visibleThreshold;
+        }
 
-                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-                StringBuilder builder = new StringBuilder();
-                for (String line; (line = reader.readLine()) != null;) {
-                    builder.append(line).append("\n");
+        @Override
+        public void onScroll(AbsListView view, int firstVisibleItem,
+                             int visibleItemCount, int totalItemCount) {
+            if (loading) {
+                if (totalItemCount > previousTotal) {
+                    loading = false;
+                    previousTotal = totalItemCount;
+                    currentPage++;
                 }
-
-                results = new JSONObject(new JSONTokener(builder.toString()));
-//                Log.d("hologoogl", results.toString());
-            } catch (Exception e) {
-                e.printStackTrace();
-                String errorMessage = "Error: ";
-                if (e instanceof UnsupportedEncodingException) {
-                    errorMessage += "Encoding exception";
-                } else if (e instanceof ClientProtocolException) {
-                    errorMessage += "POST exception";
-                } else if (e instanceof IOException) {
-                    errorMessage += "IO Exception in parsing response";
-                } else {
-                    errorMessage += "JSON parsing exception";
-                }
-
-                Log.e("googl:retrieveURLTask", errorMessage);
             }
-
-            if (results != null) {
-                metric.setAnalytics(results);
+            if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
+                // I load the next page of gigs using a background task,
+                // but you can call any function here.
+//                new LoadGigsTask().execute(currentPage + 1);
+                loading = true;
             }
+        }
+
+        @Override
+        public void onScrollStateChanged(AbsListView view, int scrollState) {
         }
     }
 }

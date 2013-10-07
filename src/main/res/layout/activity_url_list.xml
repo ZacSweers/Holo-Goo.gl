@@ -1,22 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:id="@+id/url_list"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:background="#e4e4e4"
               android:orientation="vertical">
 
+    <RelativeLayout
+            android:id="@+id/welcome"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/list_selector"
+            android:onClick="welcomeClick"
+            android:layout_marginRight="6dp"
+            android:layout_marginLeft="6dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="6dp"
+            android:layout_alignParentTop="true">
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Welcome to Holo Goo.gl!"
+                android:textColor="@color/holo_blue"
+                android:textSize="30sp"
+                android:id="@+id/textView"
+                android:singleLine="false"
+                android:gravity="center"/>
+        <View
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:background="@color/light_gray"
+                android:layout_below="@+id/textView"
+                android:layout_alignLeft="@+id/textView"
+                android:id="@+id/view"/>
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Seems you don't have any shortened URLs. \nClick here to make one or swipe down to refresh!"
+                android:textSize="12sp"
+                android:gravity="center"
+                android:layout_below="@+id/view"
+                android:layout_alignParentLeft="true"
+                android:layout_marginTop="11dp"/>
+    </RelativeLayout>
+
     <ListView
             android:id="@android:id/list"
             android:layout_width="match_parent"
             android:divider="#00000000"
             android:dividerHeight="10dp"
-            android:layout_height="0dp"
+            android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:layout_marginRight="6dp"
-            android:layout_marginLeft="6dp"
-            android:layout_marginTop="6dp"
-            android:layout_marginBottom="6dp">
+            android:layout_below="@+id/welcome"
+            android:layout_above="@+id/ad"
+            android:layout_margin="6dp"
+            >
 
     </ListView>
 
@@ -28,7 +66,6 @@
                            ads:adSize="BANNER"
                            ads:testDevices="TEST_EMULATOR, 250F8DE330EF0C26BE44ABBC6812E9C4"
                            ads:loadAdOnCreate="true"
-                           android:layout_alignParentBottom="true"
-                           android:layout_centerHorizontal="true"/>
+                           android:layout_alignParentBottom="true"/>
 
-</LinearLayout>
+</RelativeLayout>
