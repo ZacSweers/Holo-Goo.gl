@@ -2,4 +2,5 @@
 <resources>
     <color name="holo_blue">#33B5E5</color>
     <color name="light_gray">#ddd</color>
+    <color name="navy">#082567</color>
 </resources>

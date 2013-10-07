@@ -41,7 +41,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="15sp"
                 android:layout_weight="1"
-                android:textColor="@android:color/holo_blue_dark"
+                android:textColor="@color/navy"
                 android:gravity="center_vertical"
                 android:maxLines="1"
                 android:ellipsize="end"

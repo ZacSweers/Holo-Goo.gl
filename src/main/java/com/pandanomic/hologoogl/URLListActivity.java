@@ -903,14 +903,18 @@ public class URLListActivity extends ListActivity
                 }
 
                 mURLListItems.clear();
+
+                // 30 items per page
                 for (int i = 0; i < 30; ++i) {
                     URLObject metric = null;
                     try {
-                        String id = itemsArray.getJSONObject(i).getString("id");
-                        int clicks = itemsArray.getJSONObject(i).getJSONObject("analytics").getJSONObject("allTime").getInt("shortUrlClicks");
+                        JSONObject urlObj = itemsArray.getJSONObject(i);
+                        String id = urlObj.getString("id");
+                        int clicks = urlObj.getJSONObject("analytics").getJSONObject("allTime").getInt("shortUrlClicks");
                         Log.i(LOGTAG, "id is " + id);
                         metric = new URLObject(id);
                         metric.setClicks(clicks);
+                        metric.setLongURL(urlObj.getString("longUrl"));
 
                     } catch (JSONException e) {
                         e.printStackTrace();
