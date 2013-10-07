@@ -46,7 +46,6 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
@@ -85,15 +84,15 @@ public class URLListActivity extends ListActivity
 
     private static final int AUTHORIZATION_CODE = 1993;
     private static final int ACCOUNT_CODE = 1601;
-    private AuthPreferences authPreferences;
-    private AccountManager accountManager;
+    private AuthPreferences mAuthPreferences;
+    private AccountManager mAccountManager;
     private final String SCOPE = "https://www.googleapis.com/auth/urlshortener";
-    private String LOGTAG = "Main Activity";
-    private boolean loggedIn = false;
-    private final int APIVersion = Build.VERSION.SDK_INT;
+    private final String LOGTAG = "Main Activity";
+    private boolean mGoogleLoggedIn = false;
+    private final int APIVERSION = Build.VERSION.SDK_INT;
     private Menu mOptionsMenu;
     private SimpleAdapter mAdapter;
-    private static ArrayList<HashMap<String, Object>> ITEMS = new ArrayList<HashMap<String, Object>>();
+    private static ArrayList<HashMap<String, Object>> mURLListItems = new ArrayList<HashMap<String, Object>>();
     private PullToRefreshAttacher mPullToRefreshAttacher;
     private boolean mRefreshing;
     private AdView mAdView;
@@ -102,23 +101,15 @@ public class URLListActivity extends ListActivity
         HashMap<String, Object> map = new HashMap<String, Object>();
         map.put("title", "http://goo.gl/SYFV4");
         map.put("clicks", "498");
-        map.put("longurl", "www.somelongurl");
-        ITEMS.add(map);
+        map.put("longurl", "www.somelongurl.com/dsfgkljheiubs");
+        mURLListItems.add(map);
 
         HashMap<String, Object> map1 = new HashMap<String, Object>();
         map1.put("title", "http://goo.gl/4DR2e");
         map1.put("clicks", "360");
-        map1.put("longurl", "www.somelongurl");
-        ITEMS.add(map1);
-
-        HashMap<String, Object> map2 = new HashMap<String, Object>();
-        map2.put("title", "http://goo.gl/0XsgU");
-        map2.put("clicks", "432");
-        map2.put("longurl", "www.somelongurl");
-        ITEMS.add(map2);
+        map1.put("longurl", "Pull down to refresh!");
+        mURLListItems.add(map1);
     }
-
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -131,7 +122,7 @@ public class URLListActivity extends ListActivity
         ListView listView = getListView();
         String[] from = new String[] {"title", "longurl", "clicks"};
         int[] to = new int[] { R.id.title, R.id.longurl, R.id.clicks};
-        mAdapter = new SimpleAdapter(this, ITEMS, R.layout.url_list_item,
+        mAdapter = new SimpleAdapter(this, mURLListItems, R.layout.url_list_item,
                 from, to);
         setListAdapter(mAdapter);
 
@@ -150,13 +141,13 @@ public class URLListActivity extends ListActivity
 
         mRefreshing = false;
 
-        accountManager = AccountManager.get(this);
-        authPreferences = new AuthPreferences(this);
-        loggedIn = authPreferences.loggedIn();
-        if (authPreferences.getUser() != null && authPreferences.getToken() != null) {
-            // Account exists, refresh stuff and make button log out
+        mAccountManager = AccountManager.get(this);
+        mAuthPreferences = new AuthPreferences(this);
+        mGoogleLoggedIn = mAuthPreferences.loggedIn();
+        if (mAuthPreferences.getUser() != null && mAuthPreferences.getToken() != null) {
+            // Account exists, reauthorize stuff and make button say log out
             reauthorizeGoogle();
-            loggedIn = true;
+            mGoogleLoggedIn = true;
         } else {
             // No account, refresh only anonymous ones and leave button alone
         }
@@ -172,7 +163,7 @@ public class URLListActivity extends ListActivity
     public void onListItemClick(ListView l, View v, int position, long id) {
         // Do something when a list item is clicked
         if (!mRefreshing) {
-            HashMap<String, Object> map = ITEMS.get(position);
+            HashMap<String, Object> map = mURLListItems.get(position);
             String shortURL = (String) map.get("title");
             Log.i("itemClicked", Boolean.toString(mRefreshing));
             refreshMetrics task = new refreshMetrics();
@@ -187,14 +178,14 @@ public class URLListActivity extends ListActivity
             return;
         }
 
-        if (!loggedIn) {
+        if (!mGoogleLoggedIn) {
             Toast.makeText(this, "Please log in first", Toast.LENGTH_LONG).show();
             stopRefreshAnimation();
             return;
         }
 
         startRefreshAnimation("Refreshing...");
-        String authToken = authPreferences.getToken();
+        String authToken = mAuthPreferences.getToken();
 //        new RefreshListTask().execute(authToken);
         new RefreshHistoryTask().execute(authToken);
     }
@@ -257,7 +248,7 @@ public class URLListActivity extends ListActivity
         super.onResume();
         Log.v(LOGTAG, "Resumed");
 //        reauthorizeGoogle();
-//        if (loggedIn) {
+//        if (mGoogleLoggedIn) {
 //            mPullToRefreshAttacher.setRefreshing(true);
 //            onRefreshStarted(getListView());
 //        }
@@ -267,6 +258,7 @@ public class URLListActivity extends ListActivity
     @Override
     public void onDestroy() {
         if (mAdView != null) {
+            mAdView.removeAllViews();
             mAdView.destroy();
         }
         super.onDestroy();
@@ -277,7 +269,7 @@ public class URLListActivity extends ListActivity
         this.mOptionsMenu = menu;
         getMenuInflater().inflate(R.menu.urllist_menu, menu);
 
-        if (loggedIn) {
+        if (mGoogleLoggedIn) {
             menu.findItem(R.id.login).setVisible(false);
             menu.findItem(R.id.logout).setVisible(true);
         } else {
@@ -290,7 +282,7 @@ public class URLListActivity extends ListActivity
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        if (loggedIn) {
+        if (mGoogleLoggedIn) {
             menu.findItem(R.id.login).setVisible(false);
             menu.findItem(R.id.logout).setVisible(true);
         } else {
@@ -307,15 +299,15 @@ public class URLListActivity extends ListActivity
 
     private void requestToken(boolean passive) {
         Account userAccount = null;
-        String user = authPreferences.getUser();
-        for (Account account : accountManager.getAccountsByType("com.google")) {
+        String user = mAuthPreferences.getUser();
+        for (Account account : mAccountManager.getAccountsByType("com.google")) {
             if (account.name.equals(user)) {
                 userAccount = account;
                 break;
             }
         }
 
-        accountManager.getAuthToken(userAccount, "oauth2:" + SCOPE, null, this,
+        mAccountManager.getAuthToken(userAccount, "oauth2:" + SCOPE, null, this,
                 new OnTokenAcquired(passive), null);
     }
 
@@ -327,9 +319,9 @@ public class URLListActivity extends ListActivity
     private void invalidateToken() {
         AccountManager accountManager = AccountManager.get(this);
         accountManager.invalidateAuthToken("com.google",
-                authPreferences.getToken());
+                mAuthPreferences.getToken());
 
-        authPreferences.setToken(null);
+        mAuthPreferences.setToken(null);
     }
 
     @Override
@@ -341,7 +333,7 @@ public class URLListActivity extends ListActivity
             } else if (requestCode == ACCOUNT_CODE) {
                 String accountName = data
                         .getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-                authPreferences.setUser(accountName);
+                mAuthPreferences.setUser(accountName);
 
                 // invalidate old tokens which might be cached. we want a fresh
                 // one, which is guaranteed to work
@@ -372,7 +364,7 @@ public class URLListActivity extends ListActivity
                     String token = bundle
                             .getString(AccountManager.KEY_AUTHTOKEN);
 
-                    authPreferences.setToken(token);
+                    mAuthPreferences.setToken(token);
                     if (!passive) {
                         Intent intent = new Intent(URLListActivity.this, URLListActivity.class);
                         startActivity(intent);
@@ -387,9 +379,9 @@ public class URLListActivity extends ListActivity
 
     private void logout() {
         invalidateToken();
-        authPreferences.logout();
-        loggedIn = false;
-        ITEMS.clear();
+        mAuthPreferences.logout();
+        mGoogleLoggedIn = false;
+        mURLListItems.clear();
         mAdapter.notifyDataSetChanged();
         Intent intent = new Intent(URLListActivity.this, URLListActivity.class);
         startActivity(intent);
@@ -413,14 +405,14 @@ public class URLListActivity extends ListActivity
 
             JSONObject tmpobj = array.getJSONObject(0);
 //            Log.d("object", tmpobj.getString("id"));
-            ITEMS.clear();
+            mURLListItems.clear();
             for (int i = 0; i < 30; ++i) {
                 URLMetrics metrics = new URLMetrics(array.getJSONObject(i));
                 HashMap<String, Object> map = new HashMap<String, Object>();
                 map.put("title", metrics.getShortURL());
                 map.put("longurl", metrics.getLongURL());
                 map.put("clicks", "" + ((int) (Math.random() * ((999) + 1))));
-                ITEMS.add(map);
+                mURLListItems.add(map);
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -457,7 +449,7 @@ public class URLListActivity extends ListActivity
         });
 
         // hide keyboard if the dialog is dismissed
-        if (APIVersion >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+        if (APIVERSION >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 @Override
                 public void onDismiss(DialogInterface dialog) {
@@ -530,8 +522,8 @@ public class URLListActivity extends ListActivity
         }
         ShortenURLTask shortenURLTask;
 
-        if (loggedIn) {
-            shortenURLTask = new ShortenURLTask(authPreferences.getToken());
+        if (mGoogleLoggedIn) {
+            shortenURLTask = new ShortenURLTask(mAuthPreferences.getToken());
         } else {
             shortenURLTask = new ShortenURLTask();
         }
@@ -567,18 +559,18 @@ public class URLListActivity extends ListActivity
             }
         });
 
-        if (APIVersion >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+        if (APIVERSION >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 @Override
                 public void onDismiss(DialogInterface dialog) {
-                    if (!loggedIn) {
+                    if (!mGoogleLoggedIn) {
                         HashMap<String, Object> map = new HashMap<String, Object>();
                         map.put("title", resultURL);
                         Time now = new Time();
                         now.setToNow();
                         map.put("createddate", now.toString());
                         map.put("longurl", "N/A");
-                        ITEMS.add(map);
+                        mURLListItems.add(map);
                         mAdapter.notifyDataSetChanged();
                     }
                 }
@@ -630,7 +622,7 @@ public class URLListActivity extends ListActivity
     }
 
     private boolean checkAirplaneMode() {
-        if (APIVersion >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+        if (APIVERSION >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             return Settings.System.getInt(getBaseContext().getContentResolver(),
                     Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
         } else {
@@ -647,13 +639,13 @@ public class URLListActivity extends ListActivity
     }
 
     public void updateHistory(ArrayList<URLMetrics> metrics) {
-        ITEMS.clear();
+        mURLListItems.clear();
         for (URLMetrics metric : metrics) {
             HashMap<String, Object> map = new HashMap<String, Object>();
             map.put("title", metric.getShortURL());
             map.put("longurl", metric.getLongURL());
             map.put("clicks", "" + metric.getClicks());
-            ITEMS.add(map);
+            mURLListItems.add(map);
         }
 
         mAdapter.notifyDataSetChanged();
@@ -957,7 +949,7 @@ public class URLListActivity extends ListActivity
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            ITEMS.clear();
+            mURLListItems.clear();
             for (int i = 0; i < 30; ++i) {
                 URLMetrics metric = null;
                 try {

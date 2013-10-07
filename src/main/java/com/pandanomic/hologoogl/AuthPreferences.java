@@ -10,61 +10,52 @@ public class AuthPreferences {
     private static final String KEY_TOKEN = "token";
     private static final String LOGGEDIN = "loggedin";
 
-    private SharedPreferences preferences;
+    private SecurePreferences preferences;
 
 
     public AuthPreferences(Context context) {
-        preferences = context
-                .getSharedPreferences("auth", Context.MODE_PRIVATE);
+        preferences = new SecurePreferences(context, "HoloGooglPrefs", "352b5a39617e676c3d52584a7379692c5f2e5e477a5a5e7d2226395c25", true);
     }
 
     public void setUser(String user) {
-        Editor editor = preferences.edit();
-        editor.putString(KEY_USER, user);
+        preferences.put(KEY_USER, user);
         if (user == null) {
-            editor.putBoolean(LOGGEDIN, false);
+            preferences.put(LOGGEDIN, "false");
         } else {
-            editor.putBoolean(LOGGEDIN, true);
+            preferences.put(LOGGEDIN, "true");
         }
-        editor.commit();
     }
 
     public void setToken(String password) {
-        Editor editor = preferences.edit();
-        editor.putString(KEY_TOKEN, password);
+        preferences.put(KEY_TOKEN, password);
         if (password == null) {
-            editor.putBoolean(LOGGEDIN, false);
+            preferences.put(LOGGEDIN, "false");
         } else {
-            editor.putBoolean(LOGGEDIN, true);
+            preferences.put(LOGGEDIN, "true");
         }
-        editor.commit();
     }
 
     public void login(String user, String token) {
-        Editor editor = preferences.edit();
-        editor.putString(KEY_USER, user);
-        editor.putString(KEY_TOKEN, token);
-        editor.putBoolean(LOGGEDIN, true);
-        editor.commit();
+        preferences.put(KEY_USER, user);
+        preferences.put(KEY_TOKEN, token);
+        preferences.put(LOGGEDIN, "true");
     }
 
     public String getUser() {
-        return preferences.getString(KEY_USER, null);
+        return preferences.getString(KEY_USER);
     }
 
     public String getToken() {
-        return preferences.getString(KEY_TOKEN, null);
+        return preferences.getString(KEY_TOKEN);
     }
 
     public void logout() {
-        Editor editor = preferences.edit();
-        editor.remove(KEY_USER);
-        editor.remove(KEY_TOKEN);
-        editor.putBoolean(LOGGEDIN, false);
-        editor.commit();
+        preferences.removeValue(KEY_USER);
+        preferences.removeValue(KEY_TOKEN);
+        preferences.put(LOGGEDIN, "false");
     }
 
     public boolean loggedIn() {
-        return preferences.getBoolean(LOGGEDIN, false);
+        return Boolean.parseBoolean(preferences.getString(LOGGEDIN));
     }
 }
