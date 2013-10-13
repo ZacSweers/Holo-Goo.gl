@@ -1,19 +1,4 @@
 package com.pandanomic.hologoogl;
-/*
- * Copyright 2013 Chris Banes
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -108,9 +93,7 @@ public class URLListActivity extends ListActivity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_url_list);
-        /**
-         * Get ListView and give it an adapter to display the sample items
-         */
+
         ListView listView = getListView();
         String[] from = new String[] {"title", "longurl", "clicks"};
         int[] to = new int[] { R.id.title, R.id.longurl, R.id.clicks};
@@ -120,11 +103,6 @@ public class URLListActivity extends ListActivity
             findViewById(R.id.welcome).setVisibility(View.VISIBLE);
         }
         setListAdapter(mAdapter);
-
-        /**
-         * Here we create a PullToRefreshAttacher manually without an Options instance.
-         * PullToRefreshAttacher will manually create one using default values.
-         */
         mPullToRefreshAttacher = PullToRefreshAttacher.get(this);
 
         // Set the Refreshable View to be the ListView and the refresh listener to be this.
@@ -644,6 +622,7 @@ public class URLListActivity extends ListActivity
         return true;
     }
 
+    @TargetApi(17)
     private boolean checkAirplaneMode() {
         if (APIVERSION >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             return Settings.Global.getInt(getBaseContext().getContentResolver(),
@@ -911,7 +890,7 @@ public class URLListActivity extends ListActivity
                         JSONObject urlObj = itemsArray.getJSONObject(i);
                         String id = urlObj.getString("id");
                         int clicks = urlObj.getJSONObject("analytics").getJSONObject("allTime").getInt("shortUrlClicks");
-                        Log.i(LOGTAG, "id is " + id);
+//                        Log.i(LOGTAG, "id is " + id);
                         metric = new URLObject(id);
                         metric.setClicks(clicks);
                         metric.setLongURL(urlObj.getString("longUrl"));
