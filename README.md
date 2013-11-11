@@ -48,3 +48,6 @@ I apologize in advance for how terrible my code probably looks.
      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
      See the License for the specific language governing permissions and
      limitations under the License.
+     
+
+(essentially, you can use the code as you wish, but you must please ask me first if you want to use any of it in published software!)
