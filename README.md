@@ -1,4 +1,4 @@
-Holo-Goo.gl
+Holo Goo.gl
 ===========
 
 ![alt text](https://raw.github.com/pandanomic/Holo-Goo.gl/master/src/main/res/drawable-xxhdpi/ic_launcher.png "Holo Goo.gl")
