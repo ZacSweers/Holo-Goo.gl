@@ -19,7 +19,7 @@ I apologize in advance for how terrible my code probably looks.
 * And it's a Card UI!
 
 ### Some upcoming TODO's
-* I have decided to do a complete rewrite over the winter holidays, possibly starting before then. In the meantime, I will not be updating here for awhile. The reason behind this is that this has been a massive incremental (and largely unorganized) work so far, and starting fresh never hurts :)
+* I have decided to do a complete rewrite over the winter holidays, possibly starting before then. The reason behind this is that this has been a massive incremental (and largely unorganized) work so far, and starting fresh never hurts :)
 * ~~Improve refresh, it's really slow right now~~ Done!
 * Detailed URL metrics activity, including the use of the beautiful [Holo Graph](https://bitbucket.org/danielnadeau/holographlibrary) library
 * Caching URL history (anonymous and authenticated)
