@@ -1,6 +1,12 @@
 Holo Goo.gl
 ===========
 
+**UPDATE**
+
+**I have decided to migrate the meat of the shortening code to a library. Thomas Devaux has made a [beautiful app](https://play.google.com/store/apps/details?id=com.tdevaux.googleurlshortener) for goo.gl that's way better than this one ever could have been. I'll leave this repo up for posterity, as it was my first app. It was a great ride!**
+
+---------------
+
 ![alt text](https://raw.github.com/pandanomic/Holo-Goo.gl/master/src/main/res/drawable-xxhdpi/ic_launcher.png "Holo Goo.gl")
 
 My first Android pet project, a Holo Goo.gl app! It's not by any means done, but I wanted to make this repo public to give some code examples for interviews.
@@ -19,7 +25,6 @@ I apologize in advance for how terrible my code probably looks.
 * And it's a Card UI!
 
 ### Some upcoming TODO's
-* I have decided to do a complete rewrite over the winter holidays, possibly starting before then. The reason behind this is that this has been a massive incremental (and largely unorganized) work so far, and starting fresh never hurts :)
 * ~~Improve refresh, it's really slow right now~~ Done!
 * Detailed URL metrics activity, including the use of the beautiful [Holo Graph](https://bitbucket.org/danielnadeau/holographlibrary) library
 * Caching URL history (anonymous and authenticated)
